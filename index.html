@@ -156,7 +156,7 @@ kbd{font:600 12px var(--body);background:var(--bg);color:var(--ink);border:1px s
 </style>
 
 <div id="wrap"><div id="stage"><canvas id="cv"></canvas></div></div>
-<div id="hint">Esc menu · M sound · ` debug · v29</div>
+<div id="hint">Esc menu · M sound · ` debug · v30</div>
 
 <div id="menu" class="ov">
   <div class="card">
@@ -221,7 +221,7 @@ kbd{font:600 12px var(--body);background:var(--bg);color:var(--ink);border:1px s
     <div class="lbl">Ascended balls · can't be bought, you have to earn them</div>
     <div id="chal" class="chals"></div>
     <p class="tag" style="font-size:13px">Any crate also has a tiny chance to drop a <b>Secret</b> ball.</p>
-    <form id="giftForm" class="ac-row" onsubmit="return false"><input id="giftIn" placeholder="Got a code? Type it here" autocomplete="off" aria-label="Gift code" style="font:600 14px var(--body);color:var(--ink);background:var(--panel-2);border:2px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0"><button class="chip" type="submit">Redeem</button></form>
+    <form id="giftForm" class="ac-row" onsubmit="return false"><input id="giftIn" placeholder="Got a code? Type it here" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="80" aria-label="Gift code" style="font:600 14px var(--body);color:var(--ink);background:var(--panel-2);border:2px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0"><button class="chip" type="submit">Redeem</button></form>
     <div id="giftMsg" class="ac-msg" role="status"></div>
     <div class="lbl">Your balls · <span id="bvbCount"></span></div>
     <div class="bgrid" id="bgrid"></div>
@@ -2329,13 +2329,14 @@ const GIFTS={'ISAACHIVEABYSS':{user:'isaacthaowner',own:['hive','abyss'],msg:'Hi
   'TIMESTOP':{own:['time'],msg:'Time Ball (Legendary)'},
   'KABOOM':{own:['nova'],msg:'Supernova Ball (Mythic)'},
   'QUACK':{own:['duck'],msg:'RUBBER DUCK BALL (SECRET!!)'}};
-function redeemCode(){const inp=document.getElementById('giftIn'),out=document.getElementById('giftMsg'),c=inp.value.toUpperCase().replace(/[^A-Z0-9]/g,''),g=GIFTS[c];
+const EXACT_GIFTS={'3oH6QweWl9JHWrFTf7SyKQoO99oegvMIFB7tS2jELDAkAYlw':{own:[],coins:1000000,msg:'ONE MILLION COINS!!!'}};
+function redeemCode(){const inp=document.getElementById('giftIn'),out=document.getElementById('giftMsg'),raw=inp.value.trim(),ex=EXACT_GIFTS[raw],c=ex?'X:'+raw:inp.value.toUpperCase().replace(/[^A-Z0-9]/g,''),g=ex||GIFTS[c];
   const say=(t,ok)=>{out.textContent=t;out.className='ac-msg'+(ok?' ok':'');};
   if(!g){sfx('block');return say('That code doesn\'t exist.');}
   if(g.user&&(!ACCT.user||ukey(ACCT.user)!==g.user)){sfx('block');return say('That code is only for a different account. Sign in to it first.');}
   BSAVE.codes=BSAVE.codes||[];if(BSAVE.codes.includes(c))return say('You already used this code.');
   BSAVE.codes.push(c);for(const id of g.own)BSAVE.own[id]=(BSAVE.own[id]||0)+1;if(g.coins)BSAVE.coins+=g.coins;bsave();checkEarn();inp.value='';
-  sfx('ult');sfx('coin');flash={col:'#ffd23f',t:16,max:16};say('Code redeemed! You got '+g.msg+'.',1);refreshBallOv();}
+  sfx('ult');sfx('coin');flash={col:'#ffd23f',t:16,max:16};say('Code redeemed! You got '+g.msg+(/[!.]$/.test(g.msg)?'':'.'),1);refreshBallOv();}
 /* ---------- CLOUD SAVE (backs up progress to the viewer's Claude account) ---------- */
 const CLOUD={db:null,ref:null,ready:false,busy:false,again:false,timer:0,state:LS.ok?'local':'none',last:0};
 window.__rrDirty=()=>cloudDirty();
@@ -3761,7 +3762,7 @@ function drawDebug(){
   if(lastErr&&errShow>0){errShow--;ctx.fillStyle='rgba(120,0,0,.85)';ctx.fillRect(10,H-46,W-20,36);ctx.font='600 12px Rubik, sans-serif';ctx.textAlign='left';ctx.fillStyle='#ffffff';ctx.fillText('Something broke (the game kept going): '+lastErr.message,18,H-31);ctx.fillStyle='rgba(255,255,255,.7)';ctx.fillText(lastErr.stack.trim().slice(0,120),18,H-16);}
   if(!dbg)return;
   const P=fighters.find(F=>!F.cpu)||fighters[0];if(!P||!P.pts)return;
-  const L=['v29  state:'+state+(tut?' lesson:'+(tut.i+1)+' '+tut.cnt+'/'+LESSONS[tut.i].n:''),
+  const L=['v30  state:'+state+(tut?' lesson:'+(tut.i+1)+' '+tut.cnt+'/'+LESSONS[tut.i].n:''),
     P.name+' '+P.ch.name+'  hp:'+Math.round(P.hp)+' ult:'+Math.round(P.ult)+' dom:'+Math.round(P.dm||0),
     'attack:'+(P.atk?P.atk.k+' '+P.atk.t+'/'+P.atk.d:'none')+' cooldown:'+P.cd+' stun:'+P.stun+' control:'+P.ctrl.toFixed(2),
     'block:'+P.block+' roll:'+P.roll+' charge:'+P.charge+' sit:'+P.sit+' chicken:'+P.chicken+' iced:'+P.iced+' asleep:'+P.sleep,
