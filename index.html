@@ -208,7 +208,7 @@ kbd{font:600 12px var(--body);background:var(--bg);color:var(--ink);border:1px s
   <div class="card wide bvb">
     <div id="saveWarn" class="save-warn" hidden>This browser is blocking saves, so progress is lost when you close the page. Open the game from its claude.ai link while signed in to Claude, or turn off private browsing.</div>
     <div class="top"><h2>Ball VS Ball</h2><div class="row"><button class="acct-chip inline" type="button"><span class="dot"></span><span class="acct-name">Guest</span></button><span class="coins" id="bvbCoins">0 coins</span><span class="save-state mini"></span><button class="chip" id="ballBack">Back</button></div></div>
-    <p class="tag">Pick a ball, aim it, <b>lock it in</b>, then watch. Balls bounce around the box and use their powers on their own. Drain the other ball and yours smashes one of their <b>3 hearts</b>. Win coins, open crates, collect all 75 balls (including <b>anime</b> balls with named special moves), or spend coins in the <b>Ball Maker</b> to build your own with up to 3 powers. Duplicates give your ball a star (+8% HP and damage).</p>
+    <p class="tag">Pick a ball, aim it, <b>lock it in</b>, then watch. Balls bounce around the box and use their powers on their own. Drain the other ball and yours smashes one of their <b>3 hearts</b>. Win coins, open crates, collect all 77 balls (including <b>anime</b> balls with named special moves), or spend coins in the <b>Ball Maker</b> to build your own with up to 3 powers. Duplicates give your ball a star (+8% HP and damage).</p>
     <div class="modes">
       <button class="btn" data-ball="bvb1">1v1 vs CPU<small>Classic duel</small></button>
       <button class="btn alt" data-ball="bvb2">2 Players<small>Same keyboard</small></button>
@@ -1409,6 +1409,8 @@ const BALLS=[
  {id:'clock',name:'Hourglass Ball',rar:4,col:'#d9b26a',hp:115,spd:5,r:22,dmg:8,anime:1,dom:'clock',info:'DOMAIN: BROKEN CLOCKTOWER. Time crawls for enemies (they barely move) while the owner speeds up.'},
  {id:'depths',name:'Leviathan Ball',rar:4,col:'#1f3a8a',hp:120,spd:4.8,r:23,dmg:8,anime:1,dom:'depths',info:'DOMAIN: CRUSHING DEPTHS. Crushing pressure drags enemies down and slams them into the sea floor.'},
  {id:'starfall',name:'Starfall Ball',rar:5,col:'#f0e0ff',hp:125,spd:5.2,r:22,dmg:9,anime:1,secret:1,dom:'starfall',info:'DOMAIN: STARFALL OBSERVATORY. Stars rain down on enemies nonstop while it heals.'},
+ {id:'echo',name:'Echo Ball',rar:4,col:'#7fe0d0',hp:115,spd:5,r:22,dmg:8,anime:1,dom:'echo',info:'DOMAIN: HALL OF ECHOES. Copies every enemy\'s powers for itself, then fires off echoes of powers it has seen, and every one is sure to hit.'},
+ {id:'sculpt',name:'Sculptor Ball',rar:4,col:'#b07a9a',hp:115,spd:5,r:22,dmg:8,anime:1,dom:'sculpt',info:'DOMAIN: STUDIO OF SOULS. Reshapes the soul of every enemy inside: they shrink, warp around and lose max HP.'},
  {id:'ninja',name:'Ninja Ball',rar:1,col:'#3a3f5c',hp:95,spd:5.4,r:21,dmg:6,anime:1,info:'KUNAI RAIN: throws a fan of kunai every 2 seconds.'},
  {id:'guard',name:'Spirit Guard Ball',rar:1,col:'#7fe0ff',hp:100,spd:4.8,r:22,dmg:8,anime:1,info:'SPIRIT GUARD: a barrier blocks the next hit every few seconds.'},
  {id:'blade',name:'Blade Dancer Ball',rar:2,col:'#e8e2f0',hp:100,spd:5,r:22,dmg:6,anime:1,info:'THOUSAND CUTS: zips around the enemy slashing 6 times.'},
@@ -1424,13 +1426,14 @@ const BDOM={razor:{n:'RAZOR STORM SANCTUM',col:'#ff3a4a',bg:'#2a0610',cd:430,dur
   mirrorhall:{n:'HALL OF MIRRORS',col:'#e8eef8',bg:'#1c2230',cd:440,dur:200},carnival:{n:'LUCKY SEVENS PARLOR',col:'#ffd23f',bg:'#24082e',cd:440,dur:200},
   clock:{n:'BROKEN CLOCKTOWER',col:'#ffe0a0',bg:'#221808',cd:460,dur:180},depths:{n:'CRUSHING DEPTHS',col:'#5ad8ff',bg:'#020a24',cd:460,dur:190},
   starfall:{n:'STARFALL OBSERVATORY',col:'#f0e0ff',bg:'#06041a',cd:420,dur:220},
+  echo:{n:'HALL OF ECHOES',col:'#7fe0d0',bg:'#06201e',cd:450,dur:220},sculpt:{n:'STUDIO OF SOULS',col:'#e8a0c8',bg:'#200a1a',cd:450,dur:210},
   pocket:{n:'POCKET DIMENSION',col:'#c9a8ff',bg:'#160a30',cd:420,dur:150},garden:{n:'HEX GARDEN',col:'#7dff8a',bg:'#0a2410',cd:480,dur:170},tide:{n:'DROWNING TIDE',col:'#5ad8ff',bg:'#06223e',cd:480,dur:170},eye:{n:'ALL-SEEING EYE',col:'#e0b0ff',bg:'#1a0830',cd:480,dur:170}};
 const BBY={};BALLS.forEach(b=>{b.ab=b.ab||b.id;BBY[b.id]=b;});
 /* save data */
 let BSAVE={coins:300,own:{basic:1,spiky:1,tank:1,zoom:1,axe:1}};
 try{const s=JSON.parse(LS.getItem('rr_bvb')||'null');if(s&&s.own)BSAVE=s;}catch(e){}
 let SAVEKEY='rr_bvb';
-function bsave(){BSAVE.ts=Date.now();try{LS.setItem(SAVEKEY,JSON.stringify(BSAVE));}catch(e){}}
+function bsave(){if(BSAVE.inf)BSAVE.coins=999999999;BSAVE.ts=Date.now();try{LS.setItem(SAVEKEY,JSON.stringify(BSAVE));}catch(e){}}
 const bstars=id=>Math.min(5,BSAVE.own[id]||0);
 /* ---------- match flow ---------- */
 function startBall(m){AR.x=AR0.x;AR.y=AR0.y;AR.s=AR0.s;
@@ -1497,7 +1500,7 @@ function openBDom(b,k){const S=BG;if(S.bclash)return;if(S.bds.some(D=>D.o===b&&D
   S.bds.push({o:b,k,t:BDOM[k].dur,dur:BDOM[k].dur,age:0});
   if(!S.cine)S.cine={b,k,t:0,dur:160};else banner={txt:'SECOND DOMAIN: '+BDOM[k].n,t:80};sfx('domain');sfx('ult');}
 function bDomTick(){const S=BG;for(const D of S.bds.slice())bDomTick1(D);}
-function bDomTick1(D){const S=BG,b=D.o,cf=BDOM[D.k];if(b.dead||--D.t<=0){if(!b.dead)bPop(b.x,b.y-b.r-14,'DOMAIN CLOSED',cf.col);S.bds=S.bds.filter(x=>x!==D);return;}D.age++;const E=bFoes(b);
+function bDomTick1(D){const S=BG,b=D.o,cf=BDOM[D.k];if(b.dead||--D.t<=0){if(D.copied)b.mim=(b.mim||[]).filter(k2=>!D.copied.includes(k2));if(!b.dead)bPop(b.x,b.y-b.r-14,'DOMAIN CLOSED',cf.col);S.bds=S.bds.filter(x=>x!==D);return;}D.age++;const E=bFoes(b);
   if(D.k==='razor'&&D.age%10===0)for(const e of E){hurt(e,1.5,b,1);S.slashes.push({x:e.x+rnd(-10,10),y:e.y+rnd(-10,10),a:Math.random()*7,t:10,col:'#ff3a4a'});if(D.age%30===0)sfx('swing');}
   if(D.k==='abyss'){for(const e of E){e.stun=Math.max(e.stun||0,2);hurt(e,.1,b,1);}}
   if(D.k==='garden'){for(const e of E){e.vx*=.97;e.vy*=.97;if(D.age%30===0){e.psn=Math.max(e.psn||0,30);e.psnBy=b;}}b.hp=Math.min(b.max,b.hp+.07);}
@@ -1514,6 +1517,11 @@ function bDomTick1(D){const S=BG,b=D.o,cf=BDOM[D.k];if(b.dead||--D.t<=0){if(!b.d
   if(D.k==='clock'){for(const e of E){e.vx*=.82;e.vy*=.82;hurt(e,.12,b,1);}if(D.age%60===0)sfx('tick');}
   if(D.k==='depths'){for(const e of E){e.vy+=.45;if(D.age%50===25){e.gslam=40;e.gdir={x:0,y:1};e.gslamBy=b;}}if(D.age%30===0){for(let i=0;i<4;i++)S.parts.push({x:rnd(AR.x,AR.x+AR.s),y:AR.y+AR.s,vx:0,vy:-rnd(1,3),life:40,max:40,col:'#9fd8ff',sz:4});}}
   if(D.k==='starfall'){b.hp=Math.min(b.max,b.hp+.05);if(D.age%16===8&&E.length){const e=pickOne(E);S.meteors.push({x:clamp(e.x+rnd(-30,30),AR.x+10,AR.x+AR.s-10),y:clamp(e.y+rnd(-30,30),AR.y+10,AR.y+AR.s-10),t:28,max:28,o:b,team:b.team,dmg:9,star:1});}}
+  if(D.k==='echo'){if(D.age===1){b.mim=b.mim||[];D.copied=[];for(const e of E)for(const k2 of bAbs(e))if(!b.mim.includes(k2)&&!hasAb(b.def,k2)&&!['axe','sword','mimic','echo'].includes(k2)){b.mim.push(k2);D.copied.push(k2);}if(D.copied.length)bPop(b.x,b.y-b.r-16,'COPIED '+D.copied.length+' POWER'+(D.copied.length>1?'S':''),'#7fe0d0',1);}
+    if(D.age%55===25&&E.length){const r=Math.floor(Math.random()*4);for(const e of E){if(r===0){S.bolts.push({x:e.x,y:e.y,t:12});hurt(e,4,b);}else if(r===1){e.stun=Math.max(e.stun||0,30);e.iced=30;hurt(e,3,b);}else if(r===2){const dx=e.x-b.x,dy=e.y-b.y,d=Math.hypot(dx,dy)||1;e.vx+=dx/d*8;e.vy+=dy/d*8;hurt(e,3,b);}else{S.slashes.push({x:e.x,y:e.y,a:Math.random()*7,t:12,col:'#7fe0d0'});hurt(e,4,b);}}
+      bPop(AR.x+AR.s/2,AR.y+36,['ECHO: LIGHTNING','ECHO: FROST','ECHO: SHOCKWAVE','ECHO: SLASH'][r],'#7fe0d0',1);sfx('zap');}
+    if(D.t<=1&&D.copied){b.mim=(b.mim||[]).filter(k2=>!D.copied.includes(k2));}}
+  if(D.k==='sculpt'){if(D.age%45===20)for(const e of E){if(e.r>14)e.r=Math.max(14,e.r-1.5);e.max=Math.max(40,e.max-4);e.hp=Math.min(e.hp,e.max);hurt(e,4,b);const a=Math.random()*7;e.vx=Math.cos(a)*6;e.vy=Math.sin(a)*6;bPop(e.x,e.y-e.r-12,'RESHAPED','#e8a0c8');}if(D.age%45===20)sfx('glitch');}
   if(D.k==='pocket'){for(const e of E){e.vx*=.98;e.vy*=.98;hurt(e,.12,b,1);}}
   if(D.k==='eye'){for(const e of E){e.sealed=Math.max(e.sealed||0,3);hurt(e,.1,b,1);}}}
 function bClashStep(){const S=BG,C=S.bclash;if(C.intro>0){C.intro--;if(C.intro===40)sfx('clash');return;}C.t++;
@@ -1550,6 +1558,10 @@ function drawDomBg(k,D,x0,x1,age){const cf=BDOM[k],T=tick;ctx.save();ctx.beginPa
     ctx.strokeStyle='rgba(90,216,255,.2)';ctx.lineWidth=3;for(let i=0;i<5;i++){const x=AR.x+30+i*80,y=AR.y+((T*2+i*60)%AR.s);ctx.beginPath();ctx.moveTo(x,y-14);ctx.lineTo(x,y+14);ctx.lineTo(x-8,y+6);ctx.moveTo(x,y+14);ctx.lineTo(x+8,y+6);ctx.stroke();}}
   if(k==='starfall'){ctx.fillStyle='rgba(240,224,255,.8)';for(let i=0;i<50;i++){const x=AR.x+(i*71)%AR.s,y=AR.y+(i*113)%AR.s,tw=.5+.5*Math.sin(T*.1+i);ctx.globalAlpha=tw;ctx.fillRect(x,y,2,2);}ctx.globalAlpha=1;
     ctx.strokeStyle='rgba(240,224,255,.25)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,AR.y+AR.s+120,260,Math.PI*1.15,Math.PI*1.85);ctx.stroke();}
+  if(k==='echo'){for(let i=0;i<14;i++){const a=i/14*Math.PI*2+T*.01,rr=110+30*Math.sin(T*.03+i),x=cx+Math.cos(a)*rr,y=cy+Math.sin(a)*rr;const d=BALLS[(i*7)%BALLS.length];ctx.globalAlpha=.35;drawBallBody(ctx,x,y,10,d,{x:0,y:0},{t:T});}ctx.globalAlpha=1;
+    ctx.strokeStyle='rgba(127,224,208,.3)';ctx.lineWidth=2;for(let i=0;i<4;i++){ctx.beginPath();ctx.arc(cx,cy,30+i*28+((T*.6)%28),0,7);ctx.stroke();}}
+  if(k==='sculpt'){for(let i=0;i<7;i++){ctx.strokeStyle=`rgba(232,160,200,${.12+.05*(i%3)})`;ctx.lineWidth=10;ctx.beginPath();for(let x=AR.x;x<=AR.x+AR.s;x+=12){const y=AR.y+30+i*55+Math.sin(x*.025+T*.04+i)*18+Math.sin(x*.07-T*.03)*6;if(x===AR.x)ctx.moveTo(x,y);else ctx.lineTo(x,y);}ctx.stroke();}
+    ctx.fillStyle='rgba(232,160,200,.25)';for(let i=0;i<6;i++){const x=AR.x+40+(i*67)%(AR.s-80),y=AR.y+40+(i*97)%(AR.s-80),r=14+8*Math.sin(T*.05+i);ctx.beginPath();ctx.ellipse(x,y,r,r*.7,T*.02+i,0,7);ctx.fill();}}
   if(k==='pocket'){ctx.fillStyle='rgba(201,168,255,.5)';ctx.font='18px Bungee, sans-serif';ctx.textAlign='center';for(let i=0;i<10;i++){const an=i/10*Math.PI*2+T*.02;ctx.fillText('領',cx+Math.cos(an)*140,cy+Math.sin(an)*140);}ctx.strokeStyle='rgba(201,168,255,.4)';ctx.lineWidth=3;ctx.setLineDash([14,10]);ctx.lineDashOffset=-T;ctx.beginPath();ctx.arc(cx,cy,110,0,7);ctx.stroke();ctx.setLineDash([]);}
   if(k==='eye'){const E2=D&&D.o?bNearest(D.o.team,cx,cy):null,lx=E2?clamp((E2.x-cx)/10,-22,22):0,ly=E2?clamp((E2.y-cy)/10,-14,14):0;
     ctx.fillStyle='rgba(224,176,255,.15)';ctx.beginPath();ctx.ellipse(cx,cy,150,80,0,0,7);ctx.fill();ctx.strokeStyle='rgba(224,176,255,.5)';ctx.lineWidth=3;ctx.stroke();
@@ -1850,6 +1862,8 @@ function drawBallBody(g,x,y,r,def,look,o){o=o||{};
   if(AB.includes('clock')){g.strokeStyle=INK;g.lineWidth=2;g.beginPath();g.moveTo(-r*.3,r*.3);g.lineTo(r*.3,r*.3);g.lineTo(-r*.3,r*.75);g.lineTo(r*.3,r*.75);g.closePath();g.stroke();g.fillStyle='#ffe0a0';g.beginPath();g.moveTo(-r*.12,r*.65);g.lineTo(r*.12,r*.65);g.lineTo(0,r*.52);g.fill();}
   if(AB.includes('depths')){g.fillStyle='#5ad8ff';g.strokeStyle=INK;g.lineWidth=1.8;for(const k of [-1,1]){g.beginPath();g.moveTo(k*r*.95,0);g.lineTo(k*r*1.35,-r*.2);g.lineTo(k*r*1.3,r*.25);g.closePath();g.fill();g.stroke();}}
   if(AB.includes('starfall')){g.globalCompositeOperation='lighter';g.fillStyle='rgba(255,240,255,.9)';for(let i=0;i<3;i++){const a=(o.t||0)*.03+i*2.1;const x=Math.cos(a)*r*1.3,y=Math.sin(a)*r*1.3;g.beginPath();for(let j=0;j<10;j++){const aa=j/10*Math.PI*2,rr=j%2?2:5;g.lineTo(x+Math.cos(aa)*rr,y+Math.sin(aa)*rr);}g.fill();}g.globalCompositeOperation='source-over';}
+  if(AB.includes('echo')){g.strokeStyle='rgba(127,224,208,.8)';g.lineWidth=2;for(let i=1;i<=2;i++){g.beginPath();g.arc(0,0,r*(1+i*.22),-.6,.6);g.stroke();g.beginPath();g.arc(0,0,r*(1+i*.22),Math.PI-.6,Math.PI+.6);g.stroke();}}
+  if(AB.includes('sculpt')){g.strokeStyle='rgba(80,30,60,.55)';g.lineWidth=2;g.beginPath();g.moveTo(-r*.7,r*.45);g.quadraticCurveTo(-r*.2,r*.1,r*.1,r*.55);g.quadraticCurveTo(r*.4,r*.8,r*.7,r*.3);g.stroke();g.beginPath();g.moveTo(-r*.2,-r*.85);g.lineTo(r*.15,-r*.55);g.stroke();}
   if(AB.includes('razor')){g.strokeStyle='#ff3a4a';g.lineWidth=2;for(const k of [-1,1]){g.beginPath();g.moveTo(k*r*.25,r*.2);g.lineTo(k*r*.65,r*.55);g.stroke();}}
   if(AB.includes('abyss')){g.save();g.beginPath();g.arc(0,0,r-1,0,7);g.clip();g.fillStyle='rgba(255,255,255,.8)';for(let i=0;i<9;i++)g.fillRect(Math.cos(i*2.4)*r*.8,Math.sin(i*3.1)*r*.8,1.6,1.6);g.restore();}
   if(AB.includes('garden')){g.fillStyle='#7dff8a';g.strokeStyle=INK;g.lineWidth=1.8;g.beginPath();g.ellipse(-r*.18,-r*1.08,r*.22,r*.1,-.6,0,7);g.fill();g.stroke();g.beginPath();g.ellipse(r*.18,-r*1.12,r*.22,r*.1,.6,0,7);g.fill();g.stroke();g.beginPath();g.moveTo(0,-r);g.lineTo(0,-r*1.15);g.stroke();}
@@ -2069,12 +2083,12 @@ function drawDraft(){const S=BG,p=S.dq[0];if(!p){if(S.net){ctx.fillStyle='rgba(6
     ctx.restore();});
   const rb=rerollRect();ctx.fillStyle=BSAVE.coins>=20?'#ffd23f':'#4a4270';ctx.strokeStyle=INK;ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(rb.x,rb.y,rb.w,rb.h,10);ctx.fill();ctx.stroke();
   ctx.font='14px Bungee, sans-serif';ctx.textAlign='center';ctx.fillStyle=INK;ctx.fillText('REROLL · 20 COINS',W/2,rb.y+26);
-  ctx.font='600 12px Rubik, sans-serif';ctx.fillStyle='rgba(246,240,228,.75)';const m=p.map==='p2'?'◀ ▶ choose · . pick · , reroll':'Click a card, or A / D then F · E to reroll';ctx.fillText(m+'   ·   coins: '+BSAVE.coins,W/2,rb.y+62);
+  ctx.font='600 12px Rubik, sans-serif';ctx.fillStyle='rgba(246,240,228,.75)';const m=p.map==='p2'?'◀ ▶ choose · . pick · , reroll':'Click a card, or A / D then F · E to reroll';ctx.fillText(m+'   ·   coins: '+(BSAVE.inf?'∞':BSAVE.coins),W/2,rb.y+62);
 }
 function bWrap(t,x,y,w,lh){const ws=t.split(" ");let cur="",yy=y;for(const wd of ws){const tt=cur?cur+" "+wd:wd;if(ctx.measureText(tt).width>w&&cur){ctx.fillText(cur,x,yy);yy+=lh;cur=wd;}else cur=tt;}if(cur)ctx.fillText(cur,x,yy);}
 function ballRender(){
   ctx=mainCtx;ctx.setTransform(scale*dpr,0,0,scale*dpr,0,0);ctx.lineJoin='round';const S=BG;if(!S)return;
-  if(S.cine){const C=S.cine,cf=BDOM[C.k],b=C.b;draw3DCine({t:C.t,dur:C.dur,col:cf.col,rim:'#ffffff',bg:cf.bg,name:cf.n,who:b.def.name.toUpperCase()+' · '+b.p.name,theme:{razor:'spikes',abyss:'rings',garden:'pillars',tide:'cubes',eye:'eye',pocket:'rings',storm:'rings',forge:'spikes',mirrorhall:'cubes',carnival:'pillars',clock:'rings',depths:'pillars',starfall:'cubes'}[C.k]||themeOf(C.k),seed:C.k.length*977,skip:'press F to skip',
+  if(S.cine){const C=S.cine,cf=BDOM[C.k],b=C.b;draw3DCine({t:C.t,dur:C.dur,col:cf.col,rim:'#ffffff',bg:cf.bg,name:cf.n,who:b.def.name.toUpperCase()+' · '+b.p.name,theme:{razor:'spikes',abyss:'rings',garden:'pillars',tide:'cubes',eye:'eye',pocket:'rings',echo:'cubes',sculpt:'pillars',storm:'rings',forge:'spikes',mirrorhall:'cubes',carnival:'pillars',clock:'rings',depths:'pillars',starfall:'cubes'}[C.k]||themeOf(C.k),seed:C.k.length*977,skip:'press F to skip',
     drawCaster:(x,y,sc,face)=>drawBallBody(ctx,x,y,sc*.75,b.def,{x:-face*.6,y:0},{t:tick,angry:1})});return;}
   if(S.bclash&&S.bclash.intro>0){const C=S.bclash,ca=BDOM[C.ka],cb=BDOM[C.kb];draw3DClash({t:80-C.intro,dur:80,A:{col:ca.col,name:ca.n,draw:(x,y,sc,f)=>drawBallBody(ctx,x,y,sc*.7,C.a.def,{x:f*.6,y:0},{t:tick,angry:1})},B:{col:cb.col,name:cb.n,draw:(x,y,sc,f)=>drawBallBody(ctx,x,y,sc*.7,C.b.def,{x:f*.6,y:0},{t:tick,angry:1})}});return;}
   bgSpace();
@@ -2114,7 +2128,7 @@ function gacha(kind){const cost={basic:150,adv:450,cel:1500}[kind];const res=doc
   const tx=document.createElement('div');tx.innerHTML=`<small style="color:${RAR[rar].c}">${RAR[rar].n}</small><b>${d.name}</b><span>${was?'Duplicate! Now '+'★'.repeat(Math.min(5,was+1))+' (+8% HP and damage per star)':rar===5?'YOU FOUND A SECRET BALL!!':rar===4?'MYTHIC PULL!!':'NEW BALL!'}</span>`;res.appendChild(tx);
   const g=cvs.getContext('2d');g.scale(2,2);g.lineJoin='round';drawBallBody(g,30,30,22,d,{x:.4,y:.1},{t:0});
   sfx(rar>=2?'ult':'coin');if(rar>=3)sfx('boom');if(rar>=4){sfx('domain');flash={col:RAR[rar].c,t:20,max:20};}checkEarn();refreshBallOv();}
-function refreshBallOv(){document.getElementById('bvbCoins').textContent=BSAVE.coins+' coins';const grid=document.getElementById('bgrid');grid.innerHTML='';
+function refreshBallOv(){document.getElementById('bvbCoins').textContent=(BSAVE.inf?'∞':BSAVE.coins)+' coins';const grid=document.getElementById('bgrid');grid.innerHTML='';
   const base=BALLS.filter(b=>!b.custom),own=base.filter(b=>BSAVE.own[b.id]).length;renderChal();document.getElementById('bvbCount').textContent=own+' / '+base.length+((BSAVE.custom||[]).length?' · '+BSAVE.custom.length+' custom':'');
   {const el=document.createElement('button');el.className='bcard maker';el.innerHTML='<span>+</span><div><b>Make your own ball</b><small>Pick a name, color, face, size and a power from any ball you own. Spend stat points.</small></div>';el.onclick=()=>{audio();openMaker(null);};grid.appendChild(el);}
   for(const d of [...BALLS.filter(b=>b.custom),...BALLS.filter(b=>!b.custom)]){const n=BSAVE.own[d.id]||0,el=document.createElement('div');el.className='bcard'+(n?'':' locked');el.style.borderColor=RAR[d.rar].c;
@@ -2144,7 +2158,7 @@ function mkSync(full){const f=document.getElementById('mkForm');
   const d=customDef(MK,0);document.getElementById('mkStats').textContent=`HP ${d.hp} · Speed ${d.spd} · Bonk damage ${d.dmg}`;
   document.getElementById('mkPowInfo').textContent=cPows(MK).map(x=>BBY[x].name.replace(' Ball','')+': '+BBY[x].info).join('  ·  ')+(cPows(MK).length>1?'  (each extra power: -10 HP)':'');
   const cost=mkCost(),btn=document.getElementById('mkGo');btn.textContent=MK.edit!=null?(cost?'Save changes · '+cost+' coins':'Save changes · free'):'Create ball · '+cost+' coins';
-  document.getElementById('mkCoins').textContent=BSAVE.coins+' coins';
+  document.getElementById('mkCoins').textContent=(BSAVE.inf?'∞':BSAVE.coins)+' coins';
   const maxed=MK.edit==null&&(BSAVE.custom||[]).length>=6,locked=cPows(MK).some(x=>!(BSAVE.own[x]>0));btn.disabled=BSAVE.coins<cost||maxed||locked;document.getElementById('mkMsg').textContent=locked?'You need to own a ball to copy its power.':maxed?'You can have 6 custom balls. Edit one instead.':BSAVE.coins<cost?'Not enough coins yet. Win some duels!':'';}
 function mkPreview(){const c=document.getElementById('mkCv'),g=c.getContext('2d'),t=performance.now()/16;g.setTransform(2,0,0,2,0,0);g.clearRect(0,0,140,140);g.lineJoin='round';
   const d=customDef(MK,0),r=d.r*1.6,y=70+Math.sin(t*.06)*6,lk={x:Math.cos(t*.02)*.7,y:Math.sin(t*.03)*.3};
@@ -2391,15 +2405,17 @@ const GIFTS={'ISAACHIVEABYSS':{user:'isaacthaowner',own:['hive','abyss'],msg:'Hi
   'CIRCUS':{own:['carnival'],msg:'Jester Ball (Legendary)'},
   'TICKTOCK':{own:['clock'],msg:'Hourglass Ball (Mythic)'},
   'DEEPDIVE':{own:['depths'],msg:'Leviathan Ball (Mythic)'},
-  'WISHUPONASTAR':{own:['starfall'],msg:'STARFALL BALL (SECRET!!)'}};
+  'WISHUPONASTAR':{own:['starfall'],msg:'STARFALL BALL (SECRET!!)'},
+  'ECHOECHO':{own:['echo'],msg:'Echo Ball (Mythic)'},
+  'RESHAPE':{own:['sculpt'],msg:'Sculptor Ball (Mythic)'}};
 const gHash=(str,seed=7)=>{let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}h1=Math.imul(h1^(h1>>>16),2246822507);h1^=Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507);h2^=Math.imul(h1^(h1>>>13),3266489909);return(4294967296*(2097151&h2)+(h1>>>0)).toString(36);};
-const EXACT_GIFTS={'1b3190a1etf':{own:[],coins:1000000,msg:'ONE MILLION COINS!!!'}};
+const EXACT_GIFTS={'1b3190a1etf':{own:[],coins:1000000,msg:'ONE MILLION COINS!!!'},'1f5egf35dzt':{own:[],inf:1,msg:'INFINITE COINS!!! (∞)'}};
 function redeemCode(){const inp=document.getElementById('giftIn'),out=document.getElementById('giftMsg'),raw=inp.value.trim(),hk=raw.length>=40?gHash(raw):'',ex=hk?EXACT_GIFTS[hk]:null,c=ex?'X:'+hk:inp.value.toUpperCase().replace(/[^A-Z0-9]/g,''),g=ex||GIFTS[c];
   const say=(t,ok)=>{out.textContent=t;out.className='ac-msg'+(ok?' ok':'');};
   if(!g){sfx('block');return say('That code doesn\'t exist.');}
   if(g.user&&(!ACCT.user||ukey(ACCT.user)!==g.user)){sfx('block');return say('That code is only for a different account. Sign in to it first.');}
   BSAVE.codes=BSAVE.codes||[];if(BSAVE.codes.includes(c))return say('You already used this code.');
-  BSAVE.codes.push(c);for(const id of g.own)BSAVE.own[id]=(BSAVE.own[id]||0)+1;if(g.coins)BSAVE.coins+=g.coins;bsave();checkEarn();inp.value='';
+  BSAVE.codes.push(c);for(const id of g.own)BSAVE.own[id]=(BSAVE.own[id]||0)+1;if(g.coins)BSAVE.coins+=g.coins;if(g.inf)BSAVE.inf=1;bsave();checkEarn();inp.value='';
   sfx('ult');sfx('coin');flash={col:'#ffd23f',t:16,max:16};say('Code redeemed! You got '+g.msg+(/[!.]$/.test(g.msg)?'':'.'),1);refreshBallOv();}
 /* ---------- CLOUD SAVE (backs up progress to the viewer's Claude account) ---------- */
 const CLOUD={db:null,ref:null,ready:false,busy:false,again:false,timer:0,state:LS.ok?'local':'none',last:0};
