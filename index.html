@@ -119,6 +119,8 @@ kbd{font:600 12px var(--body);background:var(--bg);color:var(--ink);border:1px s
 .net-row{display:flex;align-items:center;gap:10px;background:var(--panel-2);border-radius:10px;padding:8px 12px}.net-row>div{flex:1;min-width:0}.net-row b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.net-row small{color:var(--muted);font-size:12px}
 .net-empty{color:var(--muted);font-size:13px;padding:6px 2px}
 .inv-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--panel);border:3px solid #ffd23f;border-radius:16px;padding:12px 16px;display:flex;flex-direction:column;gap:8px;box-shadow:0 10px 30px rgba(0,0,0,.5);width:min(420px,calc(100% - 32px));box-sizing:border-box;font:700 15px var(--body);color:var(--ink);animation:pop .4s cubic-bezier(.2,1.6,.4,1)}
+.egg-msg{font:800 14px var(--body);color:#1a1438;background:#ffd23f;border-radius:10px;padding:8px 12px;animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
+#titleEgg{cursor:pointer;-webkit-user-select:none;user-select:none}
 .ac-msg{font:700 13px var(--body);color:#ff8a80;min-height:1.2em}.ac-msg.ok{color:#7dffb0}
 .chals{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
 .chal{display:flex;align-items:center;gap:10px;background:var(--panel-2);border:2px solid #7dffb0;border-radius:12px;padding:8px 12px;min-width:0}
@@ -161,7 +163,8 @@ kbd{font:600 12px var(--body);background:var(--bg);color:var(--ink);border:1px s
 <div id="menu" class="ov">
   <div class="card">
     <button class="acct-chip" type="button"><span class="dot"></span><span class="acct-name">Guest</span></button>
-    <h1>Ragdoll<br><span>Rumble</span></h1>
+    <h1 id="titleEgg">Ragdoll<br><span>Rumble</span></h1>
+    <div id="eggMsg" class="egg-msg" hidden></div>
     <p class="tag">New: <b>Story Mode</b> with full cutscenes, <b>Ball VS Ball</b>, and anime <b>Awakenings</b> when you're almost out. 30 floppy fighters and ultimates that make no sense. New here? Start with the <b>Tutorial</b>. Fill your ult bar, press it, watch the arena break. Every fighter has a <b>DOMAIN EXPANSION</b> that takes over the whole arena. If two go up at once, it's a <b>DOMAIN CLASH</b>: mash to win. First to 3 rounds.</p>
     <div class="modes four">
       <button class="btn gold" id="m-story" data-mode="story">Story Mode<small>6 chapters + a boss</small></button>
@@ -2329,8 +2332,9 @@ const GIFTS={'ISAACHIVEABYSS':{user:'isaacthaowner',own:['hive','abyss'],msg:'Hi
   'TIMESTOP':{own:['time'],msg:'Time Ball (Legendary)'},
   'KABOOM':{own:['nova'],msg:'Supernova Ball (Mythic)'},
   'QUACK':{own:['duck'],msg:'RUBBER DUCK BALL (SECRET!!)'}};
-const EXACT_GIFTS={'3oH6QweWl9JHWrFTf7SyKQoO99oegvMIFB7tS2jELDAkAYlw':{own:[],coins:1000000,msg:'ONE MILLION COINS!!!'}};
-function redeemCode(){const inp=document.getElementById('giftIn'),out=document.getElementById('giftMsg'),raw=inp.value.trim(),ex=EXACT_GIFTS[raw],c=ex?'X:'+raw:inp.value.toUpperCase().replace(/[^A-Z0-9]/g,''),g=ex||GIFTS[c];
+const gHash=(str,seed=7)=>{let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}h1=Math.imul(h1^(h1>>>16),2246822507);h1^=Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507);h2^=Math.imul(h1^(h1>>>13),3266489909);return(4294967296*(2097151&h2)+(h1>>>0)).toString(36);};
+const EXACT_GIFTS={'1b3190a1etf':{own:[],coins:1000000,msg:'ONE MILLION COINS!!!'}};
+function redeemCode(){const inp=document.getElementById('giftIn'),out=document.getElementById('giftMsg'),raw=inp.value.trim(),hk=raw.length>=40?gHash(raw):'',ex=hk?EXACT_GIFTS[hk]:null,c=ex?'X:'+hk:inp.value.toUpperCase().replace(/[^A-Z0-9]/g,''),g=ex||GIFTS[c];
   const say=(t,ok)=>{out.textContent=t;out.className='ac-msg'+(ok?' ok':'');};
   if(!g){sfx('block');return say('That code doesn\'t exist.');}
   if(g.user&&(!ACCT.user||ukey(ACCT.user)!==g.user)){sfx('block');return say('That code is only for a different account. Sign in to it first.');}
@@ -2588,7 +2592,7 @@ function storyAfter(W0){
   {const g=giveCoins(80+story.ch*20,'story');story.earned=(story.earned||0)+g;pops.push({x:W/2,y:120,txt:'+'+g+' BALL VS BALL COINS',life:90,col:'#ffd23f',big:1});}
   playScene(STORY[story.ch].post,()=>{story.ch++;if(story.ch>=STORY.length){story.done=true;playScene(ENDING,storyEnd);}else playScene(STORY[story.ch].pre,storyFight);});
 }
-function storyEnd(){diff=userDiff??diff;{const g=giveCoins(500,'story');story.earned=(story.earned||0)+g;}state='matchEnd';end.hidden=false;document.getElementById('endTxt').textContent='You are the champion!';document.getElementById('endSub').textContent='Story complete with '+CHARS[story.ci].name+'. You earned '+story.earned+' Ball VS Ball coins!';document.getElementById('again').textContent='Play story again';document.getElementById('again').focus();}
+function storyEnd(){diff=userDiff??diff;{const g=giveCoins(500,'story');story.earned=(story.earned||0)+g;}state='matchEnd';end.hidden=false;document.getElementById('endTxt').textContent='You are the champion!';document.getElementById('endSub').textContent='Story complete with '+CHARS[story.ci].name+'. You earned '+story.earned+' Ball VS Ball coins! Secret code for champions: HONKHONK';document.getElementById('again').textContent='Play story again';document.getElementById('again').focus();}
 function drawGlitchCopies(F){const c=F.col;ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.5;for(const [dx,col] of [[-4,'#ff2a6a'],[4,'#2af0ff']]){ctx.save();ctx.translate(dx+(tick%7===0?rnd(-7,7):0),0);F.col=col;drawFighter(F,false);ctx.restore();}F.col=c;ctx.restore();}
 function drawVS(){
   const t=170-vsT,n=fighters.length,e=Math.min(1,t/14),ease=1-Math.pow(1-e,3);
@@ -2675,7 +2679,7 @@ function finishTut(){
   const P=tut.P;if(P.origCh){P.ch=P.origCh;P.origCh=null;}
   state='matchEnd';end.hidden=false;
   document.getElementById('endTxt').textContent='Tutorial complete!';
-  let tg=0;if(!BSAVE.tutPaid){BSAVE.tutPaid=1;tg=giveCoins(100,'tut');}document.getElementById('endSub').textContent='You know every move now. Go pick a fight.'+(tg?'  ·  +'+tg+' Ball VS Ball coins (one-time bonus)':'');
+  let tg=0;if(!BSAVE.tutPaid){BSAVE.tutPaid=1;tg=giveCoins(100,'tut');}document.getElementById('endSub').textContent='You know every move now. Go pick a fight. Secret code for finishing: BONK'+(tg?'  ·  +'+tg+' Ball VS Ball coins (one-time bonus)':'');
   document.getElementById('again').textContent='Restart tutorial';
   document.getElementById('again').focus();
 }
@@ -3726,6 +3730,8 @@ document.getElementById('netJoinF').onsubmit=e=>{e.preventDefault();audio();netJ
 document.getElementById('netInvF').onsubmit=e=>{e.preventDefault();audio();netInvite(document.getElementById('netInvIn').value);return false;};
 document.getElementById('invYes').onclick=()=>{audio();const c=document.getElementById('invToast').dataset.code;document.getElementById('invToast').hidden=true;openNet();netJoin(c);};
 document.getElementById('invNo').onclick=()=>{document.getElementById('invToast').hidden=true;};
+{let n=0,t0=0;document.getElementById('titleEgg').onclick=()=>{const now=Date.now();if(now-t0>2500)n=0;t0=now;n++;sfx('bonk');
+  if(n>=5){n=0;const m=document.getElementById('eggMsg');m.hidden=false;m.textContent='You found a secret! Ball VS Ball code: WELCOME';sfx('coin');sfx('go');}};}
 document.getElementById('m-ball').onclick=()=>{audio();menu.hidden=true;refreshBallOv();document.getElementById('gachaRes').hidden=true;ballov.hidden=false;};
 {const f=document.getElementById('mkForm'),sw=document.getElementById('mkSw');
  for(const c of ['#ff4fd8','#ff5a4e','#ffb02e','#ffe066','#8bdc5a','#38e0c0','#38bdf8','#9b6bff','#f6f0e4','#3a3f5c']){const b=document.createElement('button');b.type='button';b.className='sw';b.style.background=c;b.setAttribute('aria-label','Color '+c);b.onclick=()=>{MK.col=c;f.mkCol.value=c;mkSync();};sw.appendChild(b);}
@@ -3762,7 +3768,7 @@ function drawDebug(){
   if(lastErr&&errShow>0){errShow--;ctx.fillStyle='rgba(120,0,0,.85)';ctx.fillRect(10,H-46,W-20,36);ctx.font='600 12px Rubik, sans-serif';ctx.textAlign='left';ctx.fillStyle='#ffffff';ctx.fillText('Something broke (the game kept going): '+lastErr.message,18,H-31);ctx.fillStyle='rgba(255,255,255,.7)';ctx.fillText(lastErr.stack.trim().slice(0,120),18,H-16);}
   if(!dbg)return;
   const P=fighters.find(F=>!F.cpu)||fighters[0];if(!P||!P.pts)return;
-  const L=['v30  state:'+state+(tut?' lesson:'+(tut.i+1)+' '+tut.cnt+'/'+LESSONS[tut.i].n:''),
+  const L=['you found the debug panel. secret code: 404NOTFOUND','v30  state:'+state+(tut?' lesson:'+(tut.i+1)+' '+tut.cnt+'/'+LESSONS[tut.i].n:''),
     P.name+' '+P.ch.name+'  hp:'+Math.round(P.hp)+' ult:'+Math.round(P.ult)+' dom:'+Math.round(P.dm||0),
     'attack:'+(P.atk?P.atk.k+' '+P.atk.t+'/'+P.atk.d:'none')+' cooldown:'+P.cd+' stun:'+P.stun+' control:'+P.ctrl.toFixed(2),
     'block:'+P.block+' roll:'+P.roll+' charge:'+P.charge+' sit:'+P.sit+' chicken:'+P.chicken+' iced:'+P.iced+' asleep:'+P.sleep,
