@@ -121,6 +121,8 @@ kbd{font:600 12px var(--body);background:var(--bg);color:var(--ink);border:1px s
 .inv-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--panel);border:3px solid #ffd23f;border-radius:16px;padding:12px 16px;display:flex;flex-direction:column;gap:8px;box-shadow:0 10px 30px rgba(0,0,0,.5);width:min(420px,calc(100% - 32px));box-sizing:border-box;font:700 15px var(--body);color:var(--ink);animation:pop .4s cubic-bezier(.2,1.6,.4,1)}
 .egg-msg{font:800 14px var(--body);color:#1a1438;background:#ffd23f;border-radius:10px;padding:8px 12px;animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
 #titleEgg{cursor:pointer;-webkit-user-select:none;user-select:none}
+.bd-box{display:flex;flex-direction:column;gap:6px}.bd-box small{color:var(--muted);font-size:12px}
+.chip.bd{border-color:var(--bd)}.chip.bd[aria-pressed=true]{background:var(--bd);color:#1a1438}
 .ac-msg{font:700 13px var(--body);color:#ff8a80;min-height:1.2em}.ac-msg.ok{color:#7dffb0}
 .chals{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
 .chal{display:flex;align-items:center;gap:10px;background:var(--panel-2);border:2px solid #7dffb0;border-radius:12px;padding:8px 12px;min-width:0}
@@ -175,9 +177,12 @@ kbd{font:600 12px var(--body);background:var(--bg);color:var(--ink);border:1px s
       <button class="btn purple" id="m-ball">Ball VS Ball<small>Collect balls, watch them fight</small></button>
     </div>
     <div class="row"><span class="lbl">CPU skill</span>
+      <button class="chip" id="d-baby" data-d="baby" aria-pressed="false">Baby</button>
       <button class="chip" id="d-easy" data-d="easy" aria-pressed="false">Easy</button>
       <button class="chip" id="d-normal" data-d="normal" aria-pressed="true">Normal</button>
       <button class="chip" id="d-hard" data-d="hard" aria-pressed="false">Hard</button>
+      <button class="chip" id="d-expert" data-d="expert" aria-pressed="false">Expert</button>
+      <button class="chip" id="d-insane" data-d="insane" aria-pressed="false">Insane</button>
       <button class="chip" id="snd" aria-pressed="true">Sound on</button>
       <button class="chip" id="openMoves">Moves list</button>
     </div>
@@ -215,6 +220,7 @@ kbd{font:600 12px var(--body);background:var(--bg);color:var(--ink);border:1px s
       <button class="btn red" data-ball="bvb4">2v2<small>You + ally vs 2 CPUs</small></button>
       <button class="btn green" id="m-net" type="button">Play online<small>Invite friends by name or code</small></button>
     </div>
+    <div class="bd-box"><div class="lbl">CPU difficulty</div><div class="row" id="bdiffRow"></div><small id="bdiffInfo"></small></div>
     <div class="shop">
       <button class="btn gold" data-gacha="basic">Ball Crate<small>150 coins · Common to Epic</small></button>
       <button class="btn purple" data-gacha="adv">Advanced Crate<small>450 coins · Rare to Mythic (2%)</small></button>
@@ -617,7 +623,7 @@ function drawDomCine(C){
 // 0 head 1 neck 2 pelvis 3 elbowA 4 handA 5 elbowB 6 handB 7 kneeA 8 footA 9 kneeB 10 footB
 const BONES=[[0,1,16],[1,2,34],[0,2,50],[1,3,17],[3,4,17],[1,5,17],[5,6,17],[2,7,21],[7,8,21],[2,9,21],[9,10,21]];
 const BASE=[[0,-50],[0,-34],[0,0],[10,-22],[18,-34],[4,-20],[12,-30],[5,20],[7,40],[-5,20],[-7,40]];
-const DIFF={easy:{aggr:.025,react:.5,mash:.1},normal:{aggr:.055,react:.8,mash:.15},hard:{aggr:.11,react:1,mash:.21}};
+const DIFF={baby:{aggr:.008,react:.25,mash:.05},easy:{aggr:.025,react:.5,mash:.1},normal:{aggr:.055,react:.8,mash:.15},hard:{aggr:.11,react:1,mash:.21},expert:{aggr:.16,react:1,mash:.27},insane:{aggr:.24,react:1,mash:.34}};
 
 function spawn(F,x,f){
   const py=MAIN.y-38;
@@ -1447,7 +1453,12 @@ function startBall(m){AR.x=AR0.x;AR.y=AR0.y;AR.s=AR0.s;
   BG={m,pl,hearts:[3,3],round:0,dealt:0,parts:[],pops:[],t:0,net:m==='online'?NET:null,remote:m==='online'&&!NET.host};
   bvbRound();
 }
-function cpuBall(){const mx=diff==='easy'?1:diff==='normal'?2:3;const pool=BALLS.filter(b=>b.rar<=mx);const w=pool.map(b=>1+b.rar*.6);let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<pool.length;i++){r-=w[i];if(r<=0)return pool[i].id;}return pool[0].id;}
+const BVBD=[{k:'baby',n:'Baby',min:0,mx:0,st:1,hp:.8,dmg:.8,coins:.5,col:'#9fe8ff'},{k:'easy',n:'Easy',min:0,mx:1,st:1,hp:1,dmg:1,coins:.75,col:'#8bdc5a'},
+ {k:'normal',n:'Normal',min:0,mx:2,st:2,hp:1,dmg:1,coins:1,col:'#ffd23f'},{k:'hard',n:'Hard',min:1,mx:3,st:3,hp:1,dmg:1,coins:1.5,col:'#ffb02e'},
+ {k:'expert',n:'Expert',min:2,mx:3,st:4,hp:1.05,dmg:1.05,coins:2,col:'#ff7a2a'},{k:'insane',n:'Insane',min:3,mx:4,st:5,hp:1.1,dmg:1.1,coins:3,col:'#ff3a5c'},
+ {k:'nightmare',n:'Nightmare',min:4,mx:5,st:5,hp:1.25,dmg:1.2,coins:4.5,col:'#c084fc'},{k:'impossible',n:'Impossible',min:4,mx:6,st:5,hp:1.45,dmg:1.35,coins:7,col:'#e6e1ff'}];
+const bvbLv=()=>BVBD[clamp(BSAVE.bdiff==null?2:BSAVE.bdiff,0,BVBD.length-1)];
+function cpuBall(){const L=bvbLv();const pool=BALLS.filter(b=>!b.custom&&b.rar>=L.min&&b.rar<=L.mx);const w=pool.map(b=>1+Math.max(0,b.rar-L.min)*1.2);let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<pool.length;i++){r-=w[i];if(r<=0)return pool[i].id;}return pool[0].id;}
 function offers(){const ids=Object.keys(BSAVE.own).filter(k=>BSAVE.own[k]>0&&BBY[k]);const o=[];const bag=ids.slice();while(o.length<3){if(!bag.length)bag.push(...ids);o.push(bag.splice(Math.floor(Math.random()*bag.length),1)[0]);}return o;}
 function bvbRound(){
   const S=BG;S.round++;S.t=0;AR.x=AR0.x;AR.y=AR0.y;AR.s=AR0.s;S.balls=[];S.minis=[];S.shots=[];S.bds=[];S.bclash=null;S.cine=null;S.sparks=[];S.traps=[];S.fires=[];S.dice=[];S.ecl=0;S.puddles=[];S.tornados=[];S.turrets=[];S.meteors=[];S.tstop=0;S.webs=[];S.ropes=[];S.slashes=[];S.ghosts=[];S.call=null;S.bombs=[];S.spikes=[];S.holes=[];S.bolts=[];S.beams=[];S.rings=[];S.parts=[];S.pops=[];S.ko=null;S.ot=0;S.hs=0;S.go=0;
@@ -1458,8 +1469,8 @@ function bvbRound(){
 function bvbAfterDraft(){const S=BG;if(S.ph!=='draft'||S.dq.length)return;if(S.net){for(const p of S.pl)if(!p.remote&&p.pick)S.net.sendPick(p);if(!S.pl.every(p=>p.pick))return;}bvbAim();}
 function spawnPos(p){const S=BG,team=S.pl.filter(q=>q.team===p.team),i=team.indexOf(p),n=team.length;
   const x=p.team===0?AR.x+70:AR.x+AR.s-70,y=n===1?AR.y+AR.s/2:AR.y+AR.s*(i?0.72:0.28);return{x,y};}
-function mkBall(p){const d=p.pdef||BBY[p.pick]||BBY.basic,st=p.cpu?(diff==='hard'?3:diff==='normal'?2:1):p.remote?clamp(p.stars||1,1,5):Math.max(1,bstars(p.pick)),mul=1+.08*(st-1),pos=spawnPos(p);
-  return{p,def:d,team:p.team,x:pos.x,y:pos.y,vx:0,vy:0,r:d.r,hp:d.hp*mul,max:d.hp*mul,mul,st,aim:p.team===0?0:Math.PI,
+function mkBall(p){const d=p.pdef||BBY[p.pick]||BBY.basic,st=p.cpu?bvbLv().st:p.remote?clamp(p.stars||1,1,5):Math.max(1,bstars(p.pick)),mul=(1+.08*(st-1))*(p.cpu?bvbLv().dmg:1),hpm=p.cpu?bvbLv().hp/bvbLv().dmg:1,pos=spawnPos(p);
+  return{p,def:d,team:p.team,x:pos.x,y:pos.y,vx:0,vy:0,r:d.r,hp:d.hp*mul*hpm,max:d.hp*mul*hpm,mul,st,aim:p.team===0?0:Math.PI,
     t:0,cd:new Map(),wcd:new Map(),wa:Math.random()*7,wl:d.wl||0,wdir:1,since:0,chg:0,bounce:0,psn:0,flash:0,trail:[],las:null,domT:0,acc:0,lastShard:0,cpuLock:rnd(40,130),look:{x:p.team===0?1:-1,y:0},squash:0,dead:0};}
 function bvbAim(){const S=BG;S.ph='aim';S.aimT=600;S.balls=S.pl.map(mkBall);
   for(const b of S.balls){const e=S.balls.find(o=>o.team!==b.team);b.aim=Math.atan2(e.y-b.y,e.x-b.x)+rnd(-.5,.5);}
@@ -1833,11 +1844,11 @@ function bvbStep(){
   pressed.clear();
 }
 function checkEarn(){const st=BSAVE.st||{},got=[];for(const d of BALLS)if(d.earn&&!BSAVE.own[d.id]&&earnProg(d)[0]>=earnProg(d)[1]){BSAVE.own[d.id]=1;got.push(d.name);}if(got.length){bsave();}return got;}
-function earnProg(d){const st=BSAVE.st||{};if(d.earn==='hard')return[Math.min(10,st.hard||0),10,'Win 10 duels against Hard CPUs'];if(d.earn==='streak')return[Math.min(5,st.best||0),5,'Win 5 duels in a row (Normal or Hard)'];
+function earnProg(d){const st=BSAVE.st||{};if(d.earn==='hard')return[Math.min(10,st.hard||0),10,'Win 10 duels on Hard or higher'];if(d.earn==='streak')return[Math.min(5,st.best||0),5,'Win 5 duels in a row (Normal or higher)'];
   const base=BALLS.filter(b=>b.rar<=3&&!b.custom);return[base.filter(b=>BSAVE.own[b.id]).length,base.length,'Collect every Common to Legendary ball'];}
 function bvbOver(wt){const S=BG;S.ph='over';const human=S.pl.find(p=>!p.cpu&&!p.remote),youWon=S.m==='bvb2'?true:wt===human.team;if(S.net)S.net.over();
-  let unl=[];if(S.m!=='bvb2'&&S.m!=='online'){const st=BSAVE.st=BSAVE.st||{};if(youWon){st.wins=(st.wins||0)+1;if(diff==='hard')st.hard=(st.hard||0)+1;if(diff!=='easy'){st.streak=(st.streak||0)+1;st.best=Math.max(st.best||0,st.streak);}}else st.streak=0;unl=checkEarn();}
-  const earned=Math.round((youWon?80:25)+S.dealt/12);BSAVE.coins+=earned;bsave();
+  let unl=[];if(S.m!=='bvb2'&&S.m!=='online'){const st=BSAVE.st=BSAVE.st||{};if(youWon){st.wins=(st.wins||0)+1;if(BVBD.indexOf(bvbLv())>=3)st.hard=(st.hard||0)+1;if(BVBD.indexOf(bvbLv())>=2){st.streak=(st.streak||0)+1;st.best=Math.max(st.best||0,st.streak);}}else st.streak=0;unl=checkEarn();}
+  const earned=Math.round(((youWon?80:25)+S.dealt/12)*(S.m==='bvb1'||S.m==='bvb4'?bvbLv().coins:1));BSAVE.coins+=earned;bsave();
   state='matchEnd';end.hidden=false;document.getElementById('again').textContent='Play again';document.getElementById('newChars').textContent='Ball shop';
   document.getElementById('endTxt').textContent=S.m==='online'?(youWon?'You beat '+S.pl.find(p=>p.remote).name+'!':S.pl.find(p=>p.remote).name+' wins this one'):S.m==='bvb2'?TEAMNAME(wt)+' wins!':youWon?'You win the duel!':'You lost the duel';
   document.getElementById('endSub').textContent=(unl.length?'ASCENDED BALL UNLOCKED: '+unl.join(', ')+'!  ·  ':'')+'+'+earned+' coins  ·  you have '+BSAVE.coins+'. Spend them on ball crates in the shop.';if(unl.length){sfx('domain');document.getElementById('endTxt').textContent+=' + NEW ASCENDED BALL';}
@@ -2085,7 +2096,7 @@ function drawHeart(x,y,s,full){ctx.save();ctx.translate(x,y);ctx.beginPath();ctx
 function drawDraft(){const S=BG,p=S.dq[0];if(!p){if(S.net){ctx.fillStyle='rgba(6,4,16,.75)';ctx.fillRect(0,0,W,H);const o=S.pl.find(q=>q.remote);chroma('WAITING FOR '+(o?o.name.toUpperCase():'OPPONENT'),W/2,H/2-10,fitFont('WAITING FOR '+(o?o.name.toUpperCase():''),W-80,32),'#38bdf8');ctx.font='600 13px Rubik, sans-serif';ctx.textAlign='center';ctx.fillStyle='#a49cc4';ctx.fillText('They\'re picking their ball…',W/2,H/2+22);}return;}
   ctx.fillStyle='rgba(6,4,16,.82)';ctx.fillRect(0,0,W,H);
   chroma((S.pl.filter(q=>!q.cpu).length>1?p.name+', ':'')+'PICK YOUR BALL',W/2,108,34,'#ffb02e');
-  ctx.font='600 13px Rubik, sans-serif';ctx.textAlign='center';ctx.fillStyle='#a49cc4';ctx.fillText('Round '+S.round+' · 3 random balls from your collection',W/2,130);
+  ctx.font='600 13px Rubik, sans-serif';ctx.textAlign='center';ctx.fillStyle='#a49cc4';ctx.fillText('Round '+S.round+' · 3 random balls from your collection'+(S.pl.some(q=>q.cpu)?'  ·  CPU: '+bvbLv().n:''),W/2,130);
   p.offer.forEach((id,i)=>{const d=BBY[id],c=cardRect(i),sel=i===S.cur,rc=RAR[d.rar].c,lift=sel?-8:0;
     ctx.save();ctx.translate(0,lift);
     if(sel){ctx.globalCompositeOperation='lighter';ctx.fillStyle=rgba(rc,.25);ctx.beginPath();ctx.roundRect(c.x-8,c.y-8,c.w+16,c.h+16,20);ctx.fill();ctx.globalCompositeOperation='source-over';}
@@ -2149,7 +2160,7 @@ function gacha(kind){const cost={basic:150,adv:450,cel:1500}[kind];const res=doc
   const tx=document.createElement('div');tx.innerHTML=`<small style="color:${RAR[rar].c}">${RAR[rar].n}</small><b>${d.name}</b><span>${was?'Duplicate! Now '+'★'.repeat(Math.min(5,was+1))+' (+8% HP and damage per star)':rar===5?'YOU FOUND A SECRET BALL!!':rar===4?'MYTHIC PULL!!':'NEW BALL!'}</span>`;res.appendChild(tx);
   const g=cvs.getContext('2d');g.scale(2,2);g.lineJoin='round';drawBallBody(g,30,30,22,d,{x:.4,y:.1},{t:0});
   sfx(rar>=2?'ult':'coin');if(rar>=3)sfx('boom');if(rar>=4){sfx('domain');flash={col:RAR[rar].c,t:20,max:20};}checkEarn();refreshBallOv();}
-function refreshBallOv(){document.getElementById('bvbCoins').textContent=(BSAVE.inf?'∞':BSAVE.coins)+' coins';const grid=document.getElementById('bgrid');grid.innerHTML='';
+function refreshBallOv(){renderBDiff();document.getElementById('bvbCoins').textContent=(BSAVE.inf?'∞':BSAVE.coins)+' coins';const grid=document.getElementById('bgrid');grid.innerHTML='';
   const base=BALLS.filter(b=>!b.custom),own=base.filter(b=>BSAVE.own[b.id]).length;renderChal();document.getElementById('bvbCount').textContent=own+' / '+base.length+((BSAVE.custom||[]).length?' · '+BSAVE.custom.length+' custom':'');
   {const el=document.createElement('button');el.className='bcard maker';el.innerHTML='<span>+</span><div><b>Make your own ball</b><small>Pick a name, color, face, size and a power from any ball you own. Spend stat points.</small></div>';el.onclick=()=>{audio();openMaker(null);};grid.appendChild(el);}
   for(const d of [...BALLS.filter(b=>b.custom),...BALLS.filter(b=>!b.custom)]){const n=BSAVE.own[d.id]||0,el=document.createElement('div');el.className='bcard'+(n?'':' locked');el.style.borderColor=RAR[d.rar].c;
@@ -2196,6 +2207,12 @@ function mkCreate(){const cost=mkCost();if(BSAVE.coins<cost||cPows(MK).some(x=>!
 function renderChal(){const el=document.getElementById('chal');if(!el)return;el.innerHTML='';
   for(const d of BALLS.filter(b=>b.earn)){const [a,b2,txt]=earnProg(d),own=BSAVE.own[d.id]>0,row=document.createElement('div');row.className='chal'+(own?' done':'');
     row.innerHTML=`<div><b>${own?d.name:'??? · ASCENDED'}</b><small>${txt}</small><div class="bar"><i style="width:${Math.round(100*Math.min(1,a/b2))}%"></i></div></div><span>${own?'UNLOCKED':a+' / '+b2}</span>`;el.appendChild(row);}}
+
+function renderBDiff(){const row=document.getElementById('bdiffRow');if(!row)return;row.innerHTML='';const cur=BVBD.indexOf(bvbLv());
+  BVBD.forEach((L,i)=>{const b=document.createElement('button');b.type='button';b.className='chip bd';b.textContent=L.n;b.style.setProperty('--bd',L.col);b.setAttribute('aria-pressed',i===cur?'true':'false');
+    b.onclick=()=>{audio();BSAVE.bdiff=i;bsave();renderBDiff();};row.appendChild(b);});
+  const L=bvbLv(),tiers=['Common','Rare','Epic','Legendary','Mythic','Secret','Ascended'];
+  document.getElementById('bdiffInfo').textContent=`CPUs use ${L.min===L.mx?tiers[L.mx]:tiers[L.min]+' to '+tiers[L.mx]} balls with ${'★'.repeat(L.st)}`+(L.hp!==1?` and ${Math.round(L.hp*100)}% HP`:'')+` · coins ×${L.coins}`;}
 /* ---------- ACCOUNTS (saved on this device) ---------- */
 const ACCT={user:null,fails:0,lockUntil:0};
 function acctDB(){try{return JSON.parse(LS.getItem('rr_accounts')||'null')||{users:{}};}catch(e){return{users:{}};}}
@@ -3803,7 +3820,7 @@ function matchOver(F){state='winscene';winT=200;winner=F;sfx(F.cpu&&story?'ko':'
 function giveCoins(n,why){n=Math.round(n);if(n<=0)return 0;BSAVE.coins+=n;bsave();acctBadge();sfx('coin');return n;}
 function mainReward(F){if(mode==='tut'||demoMode)return 0;const hs=fighters.filter(x=>!x.cpu);if(!hs.length)return 0;
   if(mode==='2p')return giveCoins(30+F.wins*5,'2p');
-  const me=hs[0],won=F===me,dm={easy:.7,normal:1,hard:1.5}[diff]||1;let n=me.wins*10+(won?50:15);if(won&&mode==='brawl')n+=40;return giveCoins(n*dm,'match');}
+  const me=hs[0],won=F===me,dm={baby:.4,easy:.7,normal:1,hard:1.5,expert:2.2,insane:3.2}[diff]||1;let n=me.wins*10+(won?50:15);if(won&&mode==='brawl')n+=40;return giveCoins(n*dm,'match');}
 function finishMatch(F){state='matchEnd';end.hidden=false;document.getElementById('again').textContent='Rematch';document.getElementById('newChars').textContent='New fighters';
   document.getElementById('endTxt').textContent=F.name==='YOU'?'You win the match!':F.name+' wins the match!';
   const got=story?0:mainReward(F);document.getElementById('endSub').textContent=fighters.map(x=>`${x.name} (${x.ch.name}) ${x.wins}`).join('  ·  ')+(got?`  ·  +${got} Ball VS Ball coins`:'');
