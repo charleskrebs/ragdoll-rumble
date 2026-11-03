@@ -167,7 +167,7 @@ kbd{font:600 12px var(--body);background:var(--bg);color:var(--ink);border:1px s
 </style>
 
 <div id="wrap"><div id="stage"><canvas id="cv"></canvas></div></div>
-<div id="hint">\ menu · M sound · ` debug · v31</div>
+<div id="hint">\ menu · M sound · ` debug · v32</div>
 
 <div id="menu" class="ov">
   <div class="card">
@@ -221,7 +221,7 @@ kbd{font:600 12px var(--body);background:var(--bg);color:var(--ink);border:1px s
   <div class="card wide bvb">
     <div id="saveWarn" class="save-warn" hidden>This browser is blocking saves, so progress is lost when you close the page. Open the game from its claude.ai link while signed in to Claude, or turn off private browsing.</div>
     <div class="top"><h2>Ball VS Ball</h2><div class="row"><button class="acct-chip inline" type="button"><span class="dot"></span><span class="acct-name">Guest</span></button><span class="coins" id="bvbCoins">0 coins</span><span class="save-state mini"></span><button class="chip" id="ballBack">Back</button></div></div>
-    <p class="tag">Pick a ball, aim it, <b>lock it in</b>, then watch. Balls bounce around the box and use their powers on their own. Drain the other ball and yours smashes one of their <b>3 hearts</b>. Win coins, open crates, collect all 78 balls (including <b>anime</b> balls with named special moves), or spend coins in the <b>Ball Maker</b> to build your own with as many powers as you want. Duplicates give your ball a star (+8% HP and damage).</p>
+    <p class="tag">Pick a ball, aim it, <b>lock it in</b>, then watch. Balls bounce around the box and use their powers on their own. Drain the other ball and yours smashes one of their <b>3 hearts</b>. Win coins, open crates, collect all 79 balls (including <b>anime</b> balls with named special moves), or spend coins in the <b>Ball Maker</b> to build your own with as many powers as you want. Duplicates give your ball a star (+8% HP and damage).</p>
     <div class="modes">
       <button class="btn" data-ball="bvb1">1v1 vs CPU<small>Classic duel</small></button>
       <button class="btn alt" data-ball="bvb2">2 Players<small>Same keyboard</small></button>
@@ -1454,7 +1454,15 @@ const BDOM={razor:{n:'RAZOR STORM SANCTUM',col:'#ff3a4a',bg:'#2a0610',cd:430,dur
   echo:{n:'HALL OF ECHOES',col:'#7fe0d0',bg:'#06201e',cd:450,dur:220},sculpt:{n:'STUDIO OF SOULS',col:'#e8a0c8',bg:'#200a1a',cd:450,dur:210},
   evolve:{n:'EVOLUTION CHAMBER',col:'#c8d8ff',bg:'#0a1018',cd:460,dur:220},
   pocket:{n:'POCKET DIMENSION',col:'#c9a8ff',bg:'#160a30',cd:420,dur:150},garden:{n:'HEX GARDEN',col:'#7dff8a',bg:'#0a2410',cd:480,dur:170},tide:{n:'DROWNING TIDE',col:'#5ad8ff',bg:'#06223e',cd:480,dur:170},eye:{n:'ALL-SEEING EYE',col:'#e0b0ff',bg:'#1a0830',cd:480,dur:170}};
-const BBY={};BALLS.forEach(b=>{b.ab=b.ab||b.id;BBY[b.id]=b;});
+const ALLABS=[...new Set(BALLS.map(b=>b.ab||b.id))];
+BALLS.push({id:'everything',name:'Everything Ball',rar:6,col:'#ff9bf5',hp:160,spd:5.8,r:24,dmg:13,pow:1.35,armor:.75,haste:1,regen:.03,everything:1,rainbow:1,noCpu:1,wpn:'sword',wl:36,anime:1,earn:'everything',abs:ALLABS.slice(),
+  info:'Has EVERY ability from every ball, all at once, and all of them hit harder. Tougher, faster, heals slowly, and opens a new domain every few seconds.'});
+RAR.push({n:'CUSTOM',c:'#ff4fd8'},{n:'BEYOND',c:'#00ffcc'});
+const XBALLS=[
+ {id:'omega',name:'Omega Ball',rar:8,col:'#ff2bd6',hp:250,spd:6.4,r:24,dmg:18,pow:1.8,armor:.5,haste:2,regen:.05,everything:1,rainbow:1,beyond:1,wpn:'sword',wl:46,anime:1,abs:ALLABS.slice(),info:'BEYOND THE LIST. Every ability, running twice as fast, hitting almost twice as hard. Takes half damage.'},
+ {id:'infinity',name:'Infinity Ball',rar:8,col:'#f6f6ff',hp:400,spd:5.2,r:31,dmg:15,pow:1.5,armor:.45,haste:2,regen:.18,everything:1,beyond:1,wpn:'axe',wl:44,anime:1,abs:ALLABS.slice(),info:'BEYOND THE LIST. Every ability, twice as often. Enormous, nearly unkillable, and heals constantly.'},
+ {id:'zero',name:'Zero Ball',rar:8,col:'#ff2b2b',hp:140,spd:11,r:15,dmg:22,pow:2.2,armor:.6,haste:3,regen:.04,everything:1,beyond:1,wpn:'sword',wl:30,anime:1,abs:ALLABS.slice(),info:'BEYOND THE LIST. Tiny and absurdly fast. Every ability, three times as often, hitting more than twice as hard.'}];
+const BBY={};BALLS.forEach(b=>{b.ab=b.ab||b.id;BBY[b.id]=b;});XBALLS.forEach(b=>{b.ab=b.id;BBY[b.id]=b;});
 /* save data */
 let BSAVE={coins:300,own:{basic:1,spiky:1,tank:1,zoom:1,axe:1}};
 try{const s=JSON.parse(LS.getItem('rr_bvb')||'null');if(s&&s.own)BSAVE=s;}catch(e){}
@@ -1476,7 +1484,7 @@ const BVBD=[{k:'baby',n:'Baby',min:0,mx:0,st:1,hp:.8,dmg:.8,coins:.5,col:'#9fe8f
  {k:'expert',n:'Expert',min:2,mx:3,st:4,hp:1.05,dmg:1.05,coins:2,col:'#ff7a2a'},{k:'insane',n:'Insane',min:3,mx:4,st:5,hp:1.1,dmg:1.1,coins:3,col:'#ff3a5c'},
  {k:'nightmare',n:'Nightmare',min:4,mx:5,st:5,hp:1.25,dmg:1.2,coins:4.5,col:'#c084fc'},{k:'impossible',n:'Impossible',min:4,mx:6,st:5,hp:1.45,dmg:1.35,coins:7,col:'#e6e1ff'}];
 const bvbLv=()=>BVBD[clamp(BSAVE.bdiff==null?2:BSAVE.bdiff,0,BVBD.length-1)];
-function cpuBall(){const L=bvbLv();const pool=BALLS.filter(b=>!b.custom&&b.rar>=L.min&&b.rar<=L.mx);const w=pool.map(b=>1+Math.max(0,b.rar-L.min)*1.2);let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<pool.length;i++){r-=w[i];if(r<=0)return pool[i].id;}return pool[0].id;}
+function cpuBall(){const L=bvbLv();const pool=BALLS.filter(b=>!b.custom&&!b.noCpu&&b.rar>=L.min&&b.rar<=L.mx);const w=pool.map(b=>1+Math.max(0,b.rar-L.min)*1.2);let r=Math.random()*w.reduce((a,b)=>a+b,0);for(let i=0;i<pool.length;i++){r-=w[i];if(r<=0)return pool[i].id;}return pool[0].id;}
 function offers(){const ids=Object.keys(BSAVE.own).filter(k=>BSAVE.own[k]>0&&BBY[k]);const o=[];const bag=ids.slice();while(o.length<3){if(!bag.length)bag.push(...ids);o.push(bag.splice(Math.floor(Math.random()*bag.length),1)[0]);}return o;}
 function bvbRound(){
   const S=BG;S.round++;S.t=0;AR.x=AR0.x;AR.y=AR0.y;AR.s=AR0.s;S.balls=[];S.minis=[];S.shots=[];S.bds=[];S.bclash=null;S.cine=null;S.sparks=[];S.traps=[];S.fires=[];S.dice=[];S.ecl=0;S.puddles=[];S.tornados=[];S.turrets=[];S.meteors=[];S.tstop=0;S.webs=[];S.ropes=[];S.slashes=[];S.ghosts=[];S.call=null;S.bombs=[];S.spikes=[];S.holes=[];S.bolts=[];S.beams=[];S.rings=[];S.parts=[];S.pops=[];S.ko=null;S.ot=0;S.hs=0;S.go=0;
@@ -1487,7 +1495,7 @@ function bvbRound(){
 function bvbAfterDraft(){const S=BG;if(S.ph!=='draft'||S.dq.length)return;if(S.net){for(const p of S.pl)if(!p.remote&&p.pick)S.net.sendPick(p);if(!S.pl.every(p=>p.pick))return;}bvbAim();}
 function spawnPos(p){const S=BG,team=S.pl.filter(q=>q.team===p.team),i=team.indexOf(p),n=team.length;
   const x=p.team===0?AR.x+70:AR.x+AR.s-70,y=n===1?AR.y+AR.s/2:AR.y+AR.s*(i?0.72:0.28);return{x,y};}
-function mkBall(p){const d=p.pdef||BBY[p.pick]||BBY.basic,st=p.cpu?bvbLv().st:p.remote?clamp(p.stars||1,1,5):Math.max(1,bstars(p.pick)),mul=(1+.08*(st-1))*(p.cpu?bvbLv().dmg:1),hpm=p.cpu?bvbLv().hp/bvbLv().dmg:1,pos=spawnPos(p);
+function mkBall(p){const d=p.pdef||BBY[p.pick]||BBY.basic,st=p.cpu?bvbLv().st:p.remote?clamp(p.stars||1,1,5):Math.max(1,bstars(p.pick)),mul=(1+.08*(st-1))*(d.pow||1)*(p.cpu?bvbLv().dmg:1),hpm=p.cpu?bvbLv().hp/bvbLv().dmg:1,pos=spawnPos(p);
   return{p,def:d,team:p.team,x:pos.x,y:pos.y,vx:0,vy:0,r:d.r,hp:d.hp*mul*hpm,max:d.hp*mul*hpm,mul,st,aim:p.team===0?0:Math.PI,
     t:0,cd:new Map(),wcd:new Map(),wa:Math.random()*7,wl:d.wl||0,wdir:1,since:0,chg:0,bounce:0,psn:0,flash:0,trail:[],las:null,domT:0,acc:0,lastShard:0,cpuLock:rnd(40,130),look:{x:p.team===0?1:-1,y:0},squash:0,dead:0};}
 function bvbAim(){const S=BG;S.ph='aim';S.aimT=600;S.balls=S.pl.map(mkBall);
@@ -1508,7 +1516,7 @@ function hurt(o,d,src,quiet){
     if(fast>1&&!quiet)o.stack=Math.min(.4,(o.stack||0)+.015);}
   if(S.domSrc&&src===S.domSrc)d*=S.domBoost||1;
   if(o.inv>0){if(!quiet&&o.inv%10<5)bPop(o.x,o.y-o.r-10,'IMMUNE','#7dffb0');return;}
-  d*=1.3;if(src)d*=src.mul;if(src&&src.inv>0)d*=2;if(src&&src.stack)d*=1+src.stack;if(o.iced>0)d*=1.5;if(bHas(o,'null'))d*=.6;if(bHas(o,'pebble'))d*=.7;if(src&&src!==o&&src.team!==o.team&&bHas(o,'mirror')&&!quiet&&!src.dead){src.hp-=d*.4;if(src.hp<=0)bDie(src,o);}if(hasAb(o.def,'tank'))d*=.8;if(o.domIn)d*=1;
+  d*=1.3;if(o.def.armor)d*=o.def.armor;if(src)d*=src.mul;if(src&&src.inv>0)d*=2;if(src&&src.stack)d*=1+src.stack;if(o.iced>0)d*=1.5;if(bHas(o,'null'))d*=.6;if(bHas(o,'pebble'))d*=.7;if(src&&src!==o&&src.team!==o.team&&bHas(o,'mirror')&&!quiet&&!src.dead){src.hp-=d*.4;if(src.hp<=0)bDie(src,o);}if(hasAb(o.def,'tank'))d*=.8;if(o.domIn)d*=1;
   o.hp-=d;o.flash=6;if(src&&src.team!==o.team){S.dealt+=src.p.cpu?0:d;if(hasAb(src.def,'vamp')&&!src.dead){src.hp=Math.min(src.max,src.hp+d*.4);if(d>3)bFx(src.x,src.y,'#ff3a5c',4,2);}}
   if(quiet){o.acc+=d;if(o.acc>=6){bPop(o.x+rnd(-8,8),o.y-o.r-6,String(Math.round(o.acc)),'#c9f7a8');o.acc=0;}}
   else if(d>=1){bPop(o.x+rnd(-8,8),o.y-o.r-6,String(Math.round(d)),d>=15?'#ffb02e':'#ffffff',d>=15);}
@@ -1529,12 +1537,12 @@ function animeCall(b,txt){const S=BG;S.call={b,txt,t:60,col:b.def.col};S.hs=Math
 // how strong a domain is: its ball's rarity (Legendary 3, Mythic 4, Secret 5), plus a bonus for each extra domain the same team already has up
 function domBase(k){const d=BALLS.find(x=>!x.custom&&(x.dom===k||x.ab===k));return d?Math.max(3,d.rar>=6?4.5:d.rar):3;}
 function sideStr(team,k){const S=BG,mine=S.bds.filter(D=>D.o.team===team&&!D.o.dead);return Math.max(domBase(k),...mine.map(D=>domBase(D.k)))+.75*mine.length+mine.filter(D=>D.adapted).length+Math.max(0,...S.balls.filter(b=>b.team===team).map(b=>b.adaptClash||0));}
-function openBDom(b,k){const S=BG;if(S.bclash)return;if(S.bds.some(D=>D.o===b&&D.k===k))return;
+function openBDom(b,k){const S=BG;if(S.bclash)return;if(S.bds.some(D=>D.o===b&&D.k===k))return;if(b.def.everything){if(S.bds.some(D=>D.o===b)||S.t-(b.lastDomT??-9999)<(b.def.beyond?240:330))return;b.lastDomT=S.t;}
   const foes=S.bds.filter(D=>D.o.team!==b.team&&!D.o.dead&&D.t>20);
   if(foes.length){const da=foes.sort((x,y)=>domBase(y.k)-domBase(x.k))[0],sa=sideStr(da.o.team,da.k)+da.o.hp/da.o.max,sb=domBase(k)+.75*S.bds.filter(D=>D.o.team===b.team).length+b.hp/b.max+(b.adaptClash||0)+(k!=='evolve'&&bHas(b,'evolve')?1:0);
     S.bclash={a:da.o,ka:da.k,da,b,kb:k,t:0,dur:130,pa:sa,pb:sb,base:[sa,sb],sp:[],intro:80};banner={txt:'DOMAIN CLASH',t:60};sfx('clash');flash={col:'#ffffff',t:14,max:14};shake=14;return;}
-  const adapted=k!=='evolve'&&bHas(b,'evolve'),dur=Math.round(BDOM[k].dur*(adapted?1.3:1));S.bds.push({o:b,k,t:dur,dur,age:0,adapted});if(adapted)bPop(b.x,b.y-b.r-30,'ADAPTED DOMAIN','#c8d8ff',1);
-  if(!S.cine)S.cine={b,k,t:0,dur:160};else banner={txt:'SECOND DOMAIN: '+BDOM[k].n,t:80};sfx('domain');sfx('ult');}
+  if(b.def.everything&&!S.cine)b.domCined=1;const adapted=k!=='evolve'&&bHas(b,'evolve'),dur=Math.round(BDOM[k].dur*(adapted?1.3:1));S.bds.push({o:b,k,t:dur,dur,age:0,adapted});if(adapted)bPop(b.x,b.y-b.r-30,'ADAPTED DOMAIN','#c8d8ff',1);
+  if(!S.cine&&!(b.def.everything&&b.domCined))S.cine={b,k,t:0,dur:160};else banner={txt:'SECOND DOMAIN: '+BDOM[k].n,t:80};sfx('domain');sfx('ult');}
 function bDomTick(){const S=BG;for(const D of S.bds.slice()){S.domSrc=D.adapted?D.o:null;S.domBoost=D.adapted?1.4:1;bDomTick1(D);}S.domSrc=null;S.domBoost=1;}
 function bDomTick1(D){const S=BG,b=D.o,cf=BDOM[D.k];if(b.dead||--D.t<=0){if(D.copied)b.mim=(b.mim||[]).filter(k2=>!D.copied.includes(k2));if(!b.dead)bPop(b.x,b.y-b.r-14,'DOMAIN CLOSED',cf.col);S.bds=S.bds.filter(x=>x!==D);return;}D.age++;const E=bFoes(b);
   if(D.k==='razor'&&D.age%10===0)for(const e of E){hurt(e,1.5,b,1);S.slashes.push({x:e.x+rnd(-10,10),y:e.y+rnd(-10,10),a:Math.random()*7,t:10,col:'#ff3a4a'});if(D.age%30===0)sfx('swing');}
@@ -1639,8 +1647,8 @@ function onWall1(b,nx,ny,id){const S=BG;
 }
 function shards(b,nx,ny){const S=BG;if(S.t-b.lastShard<30)return;b.lastShard=S.t;sfx('shatter');
   const base=(nx||ny)?Math.atan2(-ny,-nx):Math.random()*7;for(let i=0;i<4;i++){const a=base+rnd(-1.2,1.2),v=rnd(5,8);S.shots.push({x:b.x,y:b.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:50,dmg:4,o:b,team:b.team,col:'#dff6ff',k:'shard'});}}
-function abil(b){if(b.sealed>0||b.stun>0)return;for(const id of bAbs(b))abil1(b,id);}
-function abil1(b,id){const S=BG,t=b.t,E=bFoes(b);
+function abil(b){if(b.def.regen&&!b.dead)b.hp=Math.min(b.max,b.hp+b.def.regen*(b.max/100));if(b.sealed>0||b.stun>0)return;const h=b.def.haste||1;for(const id of bAbs(b)){if(h===1||BDOM[id])abil1(b,id);else for(let k=0;k<h;k++)abil1(b,id,b.t*h+k);}}
+function abil1(b,id,tt){const S=BG,t=tt??b.t,E=bFoes(b);
   if(id==='axe'&&!(b.stun>0))b.wa+=b.wdir*(.07+.17*(1-b.hp/b.max));
   if(id==='sword'&&!(b.stun>0))b.wa+=b.wdir*.075;
   if(id==='zoom'||b.domT>0){}
@@ -1862,7 +1870,7 @@ function bvbStep(){
   pressed.clear();
 }
 function checkEarn(){const st=BSAVE.st||{},got=[];for(const d of BALLS)if(d.earn&&!BSAVE.own[d.id]&&earnProg(d)[0]>=earnProg(d)[1]){BSAVE.own[d.id]=1;got.push(d.name);}if(got.length){bsave();}return got;}
-function earnProg(d){const st=BSAVE.st||{};if(d.earn==='hard')return[Math.min(10,st.hard||0),10,'Win 10 duels on Hard or higher'];if(d.earn==='streak')return[Math.min(5,st.best||0),5,'Win 5 duels in a row (Normal or higher)'];
+function earnProg(d){const st=BSAVE.st||{};if(d.earn==='everything'){const base=BALLS.filter(b=>!b.custom&&b.id!=='everything');return[base.filter(b=>BSAVE.own[b.id]).length,base.length,'Own every other ball in the game'];}if(d.earn==='hard')return[Math.min(10,st.hard||0),10,'Win 10 duels on Hard or higher'];if(d.earn==='streak')return[Math.min(5,st.best||0),5,'Win 5 duels in a row (Normal or higher)'];
   const base=BALLS.filter(b=>b.rar<=3&&!b.custom);return[base.filter(b=>BSAVE.own[b.id]).length,base.length,'Collect every Common to Legendary ball'];}
 function bvbOver(wt){const S=BG;S.ph='over';const human=S.pl.find(p=>!p.cpu&&!p.remote),youWon=S.m==='bvb2'?true:wt===human.team;if(S.net)S.net.over();
   let unl=[];if(S.m!=='bvb2'&&S.m!=='online'){const st=BSAVE.st=BSAVE.st||{};if(youWon){st.wins=(st.wins||0)+1;if(BVBD.indexOf(bvbLv())>=3)st.hard=(st.hard||0)+1;if(BVBD.indexOf(bvbLv())>=2){st.streak=(st.streak||0)+1;st.best=Math.max(st.best||0,st.streak);}}else st.streak=0;unl=checkEarn();}
@@ -1877,10 +1885,11 @@ function rerollRect(){return{x:W/2-110,y:418,w:220,h:36};}
 const myCustoms=()=>BALLS.filter(b=>b.custom&&BSAVE.own[b.id]);
 function customRect(i,n){const w=Math.min(150,(W-60-(n-1)*8)/n),x0=W/2-(n*w+(n-1)*8)/2;return{x:x0+i*(w+8),y:494,w,h:36};}
 /* ---------- drawing ---------- */
+function rbHex(h){h=((h%360)+360)%360;const f=n=>{const k=(n+h/30)%12,v=.62-.342*Math.max(-1,Math.min(k-3,9-k,1));return Math.round(v*255).toString(16).padStart(2,'0');};return'#'+f(0)+f(8)+f(4);}
 function drawBallBody(g,x,y,r,def,look,o){o=o||{};
   g.save();g.translate(x,y);
   if(o.sq){const s=1+o.sq*.03;g.scale(s,1/s);}
-  const col=def.col;
+  if(def.everything)def=Object.assign({},def,{abs:[],ab:'x',col:def.rainbow?rbHex((o.t||tick)*3+(def.beyond?120:0)):def.col});const col=def.col;
   if(hasAb(def,'spiky')||hasAb(def,'poison')){g.fillStyle=hasAb(def,'poison')?'#4f8f2e':'#6b7388';g.strokeStyle=INK;g.lineWidth=2;for(let i=0;i<10;i++){const a=i/10*Math.PI*2+(o.t||0)*.02;g.beginPath();g.moveTo(Math.cos(a-.22)*r*.92,Math.sin(a-.22)*r*.92);g.lineTo(Math.cos(a)*r*1.36,Math.sin(a)*r*1.36);g.lineTo(Math.cos(a+.22)*r*.92,Math.sin(a+.22)*r*.92);g.closePath();g.fill();g.stroke();}}
   if(hasAb(def,'honk')){g.fillStyle='#ffb02e';g.strokeStyle=INK;g.lineWidth=2.5;const lx=look.x>=0?1:-1;g.beginPath();g.moveTo(lx*r*.7,-r*.15);g.lineTo(lx*r*1.55,0);g.lineTo(lx*r*.7,r*.25);g.closePath();g.fill();g.stroke();}
   const AB=def.abs||[def.ab],ab=def.ab,bk=look.x>=0?-1:1;
@@ -2181,12 +2190,11 @@ function gacha(kind){const cost={basic:150,adv:450,cel:1500}[kind];const res=doc
 function refreshBallOv(){renderBDiff();document.getElementById('bvbCoins').textContent=(BSAVE.inf?'∞':BSAVE.coins)+' coins';const grid=document.getElementById('bgrid');grid.innerHTML='';
   const base=BALLS.filter(b=>!b.custom),own=base.filter(b=>BSAVE.own[b.id]).length;renderChal();document.getElementById('bvbCount').textContent=own+' / '+base.length+((BSAVE.custom||[]).length?' · '+BSAVE.custom.length+' custom':'');
   {const el=document.createElement('button');el.className='bcard maker';el.innerHTML='<span>+</span><div><b>Make your own ball</b><small>Pick a name, color, face, size and a power from any ball you own. Spend stat points.</small></div>';el.onclick=()=>{audio();openMaker(null);};grid.appendChild(el);}
-  for(const d of [...BALLS.filter(b=>b.custom),...BALLS.filter(b=>!b.custom)]){const n=BSAVE.own[d.id]||0,el=document.createElement('div');el.className='bcard'+(n?'':' locked');el.style.borderColor=RAR[d.rar].c;
+  for(const d of [...XBALLS.filter(b=>BSAVE.own[b.id]),...BALLS.filter(b=>b.custom),...BALLS.filter(b=>!b.custom)]){const n=BSAVE.own[d.id]||0,el=document.createElement('div');el.className='bcard'+(n?'':' locked');el.style.borderColor=RAR[d.rar].c;
     const c=document.createElement('canvas');c.width=84;c.height=84;el.appendChild(c);const t=document.createElement('div');
     t.innerHTML=d.custom?`<b></b><small style="color:#ff4fd8">CUSTOM · ${cPows(BSAVE.custom[+d.id.slice(1)]).map(x=>BBY[x].name.replace(' Ball','')).join(' + ')}</small><small>HP ${d.hp} · Speed ${d.spd} · Dmg ${d.dmg}</small><button class="chip mini" data-edit="${d.id.slice(1)}">Edit</button>`:n?`<b>${d.name}</b><small style="color:${RAR[d.rar].c}">${RAR[d.rar].n} ${'★'.repeat(Math.min(5,n))}</small><small>${d.info}</small>`:`<b>???</b><small style="color:${RAR[d.rar].c}">${RAR[d.rar].n}</small><small>${d.secret?'Nobody knows how to get this.':d.earn?'Can\'t be bought. '+earnProg(d)[2]+' ('+earnProg(d)[0]+'/'+earnProg(d)[1]+').':'Open crates to unlock'}</small>`;
     el.appendChild(t);if(d.custom){t.querySelector('b').textContent=d.name;t.querySelector('[data-edit]').onclick=()=>{audio();openMaker(+d.id.slice(1));};}grid.appendChild(el);const g=c.getContext('2d');g.scale(2,2);g.lineJoin='round';if(n)drawBallBody(g,21,21,15,d,{x:.4,y:.1},{t:0});else{g.fillStyle='#2d2650';g.strokeStyle=INK;g.lineWidth=2.5;g.beginPath();g.arc(21,21,15,0,7);g.fill();g.stroke();g.fillStyle='#6a5aa8';g.font='16px Bungee, sans-serif';g.textAlign='center';g.fillText('?',21,27);}}}
 /* ---------- BALL MAKER ---------- */
-RAR.push({n:'CUSTOM',c:'#ff4fd8'});
 const POWCOST=[250,400,700,1000,2000,3000,2500,0],MKSIZE={small:{r:17,hp:85,spd:6,dmg:7},normal:{r:22,hp:100,spd:5,dmg:8},big:{r:29,hp:125,spd:4,dmg:9}};
 function cPows(c){const a=(c.pows||[c.pow]).filter((x,i,arr)=>x&&BBY[x]&&!BBY[x].custom&&arr.indexOf(x)===i);return a.length?a:['basic'];}
 function customDef(c,i){const b=MKSIZE[c.size]||MKSIZE.normal,pw=cPows(c),src=BBY[pw[0]],wsrc=pw.map(x=>BBY[x]).find(d=>d.wpn)||src;
@@ -2202,7 +2210,7 @@ function mkCost(){if(!MK)return 0;const old=MK.edit!=null?MK.origPows:[];return 
 function mkSync(full){const f=document.getElementById('mkForm');
   if(full){f.mkName.value=MK.name;f.mkCol.value=MK.col;
     const sel=f.mkPowAdd;sel.innerHTML='';const o0=document.createElement('option');o0.value='';o0.textContent='+ Add a power…';sel.appendChild(o0);
-    for(const b of BALLS){if(b.custom||MK.pows.includes(b.id))continue;const own=BSAVE.own[b.id]>0,o=document.createElement('option');o.value=b.id;o.disabled=!own;o.textContent=(own?'':'🔒 ')+b.name+' · '+RAR[b.rar].n+' · '+POWCOST[b.rar]+' coins';sel.appendChild(o);}
+    for(const b of BALLS){if(b.custom||b.everything||MK.pows.includes(b.id))continue;const own=BSAVE.own[b.id]>0,o=document.createElement('option');o.value=b.id;o.disabled=!own;o.textContent=(own?'':'🔒 ')+b.name+' · '+RAR[b.rar].n+' · '+POWCOST[b.rar]+' coins';sel.appendChild(o);}
     const list=document.getElementById('mkPowList');list.innerHTML='';MK.pows.forEach((id,i)=>{const d=BBY[id];if(!d)return;const chip=document.createElement('span');chip.className='pow-chip';chip.style.borderColor=RAR[d.rar].c;
       const t=document.createElement('span');t.textContent=d.name.replace(' Ball','');chip.appendChild(t);if(MK.pows.length>1){const x=document.createElement('button');x.type='button';x.textContent='×';x.setAttribute('aria-label','Remove '+d.name);x.onclick=()=>{MK.pows.splice(i,1);mkSync(true);};chip.appendChild(x);}list.appendChild(chip);});
     document.getElementById('mkPowCount').textContent=MK.pows.length+' power'+(MK.pows.length>1?'s':'');}
@@ -2470,7 +2478,7 @@ const GIFTS={'ISAACHIVEABYSS':{user:'isaacthaowner',own:['hive','abyss'],msg:'Hi
   'RESHAPE':{own:['sculpt'],msg:'Sculptor Ball (Mythic)'},
   'ADAPT':{own:['evolve'],msg:'Evolver Ball (Mythic)'}};
 const gHash=(str,seed=7)=>{let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}h1=Math.imul(h1^(h1>>>16),2246822507);h1^=Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507);h2^=Math.imul(h1^(h1>>>13),3266489909);return(4294967296*(2097151&h2)+(h1>>>0)).toString(36);};
-const EXACT_GIFTS={'1b3190a1etf':{own:[],coins:1000000,msg:'ONE MILLION COINS!!!'},'1f5egf35dzt':{own:[],inf:1,msg:'INFINITE COINS!!! (∞)'},'2f6x1hkutm6':{own:[],inf:1,all:1,msg:'INFINITE COINS AND EVERY SINGLE BALL!!!'}};
+const EXACT_GIFTS={'co6q4lyua8':{own:['omega','infinity','zero'],msg:'THE BEYOND BALLS: Omega, Infinity and Zero. They aren\'t on the list, and no other code gives them!'},'1b3190a1etf':{own:[],coins:1000000,msg:'ONE MILLION COINS!!!'},'1f5egf35dzt':{own:[],inf:1,msg:'INFINITE COINS!!! (∞)'},'2f6x1hkutm6':{own:[],inf:1,all:1,msg:'INFINITE COINS AND EVERY SINGLE BALL!!!'}};
 function redeemCode(){const inp=document.getElementById('giftIn'),out=document.getElementById('giftMsg'),raw=inp.value.trim(),hk=raw.length>=40?gHash(raw):'',ex=hk?EXACT_GIFTS[hk]:null,c=ex?'X:'+hk:inp.value.toUpperCase().replace(/[^A-Z0-9]/g,''),g=ex||GIFTS[c];
   const say=(t,ok)=>{out.textContent=t;out.className='ac-msg'+(ok?' ok':'');};
   if(!g){sfx('block');return say('That code doesn\'t exist.');}
@@ -4005,7 +4013,7 @@ function drawDebug(){
   if(lastErr&&errShow>0){errShow--;ctx.fillStyle='rgba(120,0,0,.85)';ctx.fillRect(10,H-46,W-20,36);ctx.font='600 12px Rubik, sans-serif';ctx.textAlign='left';ctx.fillStyle='#ffffff';ctx.fillText('Something broke (the game kept going): '+lastErr.message,18,H-31);ctx.fillStyle='rgba(255,255,255,.7)';ctx.fillText(lastErr.stack.trim().slice(0,120),18,H-16);}
   if(!dbg)return;
   const P=fighters.find(F=>!F.cpu)||fighters[0];if(!P||!P.pts)return;
-  const L=['you found the debug panel. secret code: 404NOTFOUND','v31  state:'+state+(tut?' lesson:'+(tut.i+1)+' '+tut.cnt+'/'+LESSONS[tut.i].n:''),
+  const L=['you found the debug panel. secret code: 404NOTFOUND','v32  state:'+state+(tut?' lesson:'+(tut.i+1)+' '+tut.cnt+'/'+LESSONS[tut.i].n:''),
     P.name+' '+P.ch.name+'  hp:'+Math.round(P.hp)+' ult:'+Math.round(P.ult)+' dom:'+Math.round(P.dm||0),
     'attack:'+(P.atk?P.atk.k+' '+P.atk.t+'/'+P.atk.d:'none')+' cooldown:'+P.cd+' stun:'+P.stun+' control:'+P.ctrl.toFixed(2),
     'block:'+P.block+' roll:'+P.roll+' charge:'+P.charge+' sit:'+P.sit+' chicken:'+P.chicken+' iced:'+P.iced+' asleep:'+P.sleep,
