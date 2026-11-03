@@ -148,6 +148,9 @@ kbd{font:600 12px var(--body);background:var(--bg);color:var(--ink);border:1px s
 .sw{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);cursor:pointer;padding:0}
 .mk-st{display:grid;grid-template-columns:70px 1fr;align-items:center;font:600 13px var(--body);color:var(--muted)}
 #mkGo:disabled{opacity:.5;cursor:not-allowed}
+.pow-list{display:flex;flex-wrap:wrap;gap:6px;max-height:140px;overflow:auto}
+.pow-chip{display:inline-flex;align-items:center;gap:4px;border:2px solid var(--line);border-radius:999px;padding:3px 4px 3px 10px;font:700 12px var(--body);background:var(--panel-2)}
+.pow-chip button{border:none;background:none;color:var(--muted);font:800 14px var(--body);cursor:pointer;padding:0 6px}
 .modes.four{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
 .scroll{overflow-x:auto;border-radius:12px}
 .mtable{display:grid;grid-template-columns:1.1fr 1.2fr 1.2fr 2fr;min-width:680px;font-size:13px}
@@ -213,7 +216,7 @@ kbd{font:600 12px var(--body);background:var(--bg);color:var(--ink);border:1px s
   <div class="card wide bvb">
     <div id="saveWarn" class="save-warn" hidden>This browser is blocking saves, so progress is lost when you close the page. Open the game from its claude.ai link while signed in to Claude, or turn off private browsing.</div>
     <div class="top"><h2>Ball VS Ball</h2><div class="row"><button class="acct-chip inline" type="button"><span class="dot"></span><span class="acct-name">Guest</span></button><span class="coins" id="bvbCoins">0 coins</span><span class="save-state mini"></span><button class="chip" id="ballBack">Back</button></div></div>
-    <p class="tag">Pick a ball, aim it, <b>lock it in</b>, then watch. Balls bounce around the box and use their powers on their own. Drain the other ball and yours smashes one of their <b>3 hearts</b>. Win coins, open crates, collect all 78 balls (including <b>anime</b> balls with named special moves), or spend coins in the <b>Ball Maker</b> to build your own with up to 3 powers. Duplicates give your ball a star (+8% HP and damage).</p>
+    <p class="tag">Pick a ball, aim it, <b>lock it in</b>, then watch. Balls bounce around the box and use their powers on their own. Drain the other ball and yours smashes one of their <b>3 hearts</b>. Win coins, open crates, collect all 78 balls (including <b>anime</b> balls with named special moves), or spend coins in the <b>Ball Maker</b> to build your own with as many powers as you want. Duplicates give your ball a star (+8% HP and damage).</p>
     <div class="modes">
       <button class="btn" data-ball="bvb1">1v1 vs CPU<small>Classic duel</small></button>
       <button class="btn alt" data-ball="bvb2">2 Players<small>Same keyboard</small></button>
@@ -253,7 +256,7 @@ kbd{font:600 12px var(--body);background:var(--bg);color:var(--ink);border:1px s
           <span id="mkSw" class="row"></span></div></div>
         <div class="mk-f"><span class="lbl">Size</span><div class="row"><button type="button" class="chip" data-mksize="small">Small &amp; fast</button><button type="button" class="chip" data-mksize="normal">Normal</button><button type="button" class="chip" data-mksize="big">Big &amp; tanky</button></div></div>
         <div class="mk-f"><span class="lbl">Face</span><div class="row"><button type="button" class="chip" data-mkface="normal">Normal</button><button type="button" class="chip" data-mkface="angry">Angry</button><button type="button" class="chip" data-mkface="cute">Cute</button><button type="button" class="chip" data-mkface="shades">Shades</button><button type="button" class="chip" data-mkface="cyclops">Cyclops</button><button type="button" class="chip" data-mkface="derp">Derp</button></div></div>
-        <div class="mk-f"><span class="lbl">Powers · up to 3, copied from balls you own</span><select name="mkPow" aria-label="Power 1"></select><select name="mkPow2" aria-label="Power 2"></select><select name="mkPow3" aria-label="Power 3"></select><small id="mkPowInfo" class="mk-msg" style="text-align:left"></small></div>
+        <div class="mk-f"><span class="lbl">Powers · as many as you want · <span id="mkPowCount"></span></span><div id="mkPowList" class="pow-list"></div><select name="mkPowAdd" aria-label="Add a power"></select><small id="mkPowInfo" class="mk-msg" style="text-align:left"></small></div>
         <div class="mk-f"><span class="lbl">Stats · <span id="mkPts"></span></span>
           <label class="mk-st">HP<input type="range" min="0" max="10" name="mk_hp"></label>
           <label class="mk-st">Speed<input type="range" min="0" max="10" name="mk_spd"></label>
@@ -2172,23 +2175,27 @@ RAR.push({n:'CUSTOM',c:'#ff4fd8'});
 const POWCOST=[250,400,700,1000,2000,3000,2500,0],MKSIZE={small:{r:17,hp:85,spd:6,dmg:7},normal:{r:22,hp:100,spd:5,dmg:8},big:{r:29,hp:125,spd:4,dmg:9}};
 function cPows(c){const a=(c.pows||[c.pow]).filter((x,i,arr)=>x&&BBY[x]&&!BBY[x].custom&&arr.indexOf(x)===i);return a.length?a:['basic'];}
 function customDef(c,i){const b=MKSIZE[c.size]||MKSIZE.normal,pw=cPows(c),src=BBY[pw[0]],wsrc=pw.map(x=>BBY[x]).find(d=>d.wpn)||src;
-  return{id:'c'+i,ab:src.ab,abs:pw.map(x=>BBY[x].ab),name:c.name||'My Ball',rar:7,col:c.col,face:c.face,custom:1,r:b.r,hp:Math.round(b.hp+c.hp*6-(pw.length-1)*10),spd:+(Math.max(b.spd,...pw.filter(x=>['frame','zoom'].includes(x)).map(x=>BBY[x].spd))+c.spd*.25).toFixed(2),dmg:+(b.dmg+c.dmg*1.2).toFixed(1),wpn:wsrc.wpn,wl:wsrc.wl,anime:src.anime,info:'Made by you. Powers: '+pw.map(x=>BBY[x].name.replace(' Ball','')).join(' + ')+'.'+(pw.includes('frame')?' Moves at Frame Ball speed!':pw.includes('zoom')?' Moves at Zoom Ball speed!':'')};}
+  return{id:'c'+i,ab:src.ab,abs:pw.map(x=>BBY[x].ab),name:c.name||'My Ball',rar:7,col:c.col,face:c.face,custom:1,r:b.r,hp:Math.max(40,Math.round(b.hp+c.hp*6-(pw.length-1)*6)),spd:+(Math.max(b.spd,...pw.filter(x=>['frame','zoom'].includes(x)).map(x=>BBY[x].spd))+c.spd*.25).toFixed(2),dmg:+(b.dmg+c.dmg*1.2).toFixed(1),wpn:wsrc.wpn,wl:wsrc.wl,anime:src.anime,info:'Made by you. Powers: '+pw.map(x=>BBY[x].name.replace(' Ball','')).join(' + ')+'.'+(pw.includes('frame')?' Moves at Frame Ball speed!':pw.includes('zoom')?' Moves at Zoom Ball speed!':'')};}
 function loadCustoms(){for(let i=BALLS.length-1;i>=0;i--)if(BALLS[i].custom){delete BBY[BALLS[i].id];BALLS.splice(i,1);}
   (BSAVE.custom||[]).forEach((c,i)=>{const d=customDef(c,i);BALLS.push(d);BBY[d.id]=d;BSAVE.own[d.id]=1;});}
 loadCustoms();
 let MK=null,mkRaf=0;
 function openMaker(i){const ed=i!=null&&BSAVE.custom&&BSAVE.custom[i];
-  MK=ed?Object.assign({},BSAVE.custom[i],{edit:i,pows:cPows(BSAVE.custom[i]).concat([null,null]).slice(0,3),origPows:cPows(BSAVE.custom[i])}):{name:'',col:'#ff4fd8',size:'normal',face:'normal',pows:['basic',null,null],hp:3,spd:3,dmg:4,edit:null};
+  MK=ed?Object.assign({},BSAVE.custom[i],{edit:i,pows:cPows(BSAVE.custom[i]).slice(),origPows:cPows(BSAVE.custom[i])}):{name:'',col:'#ff4fd8',size:'normal',face:'normal',pows:['basic'],hp:3,spd:3,dmg:4,edit:null};
   ballov.hidden=true;document.getElementById('makerov').hidden=false;mkSync(true);cancelAnimationFrame(mkRaf);const loop=()=>{if(document.getElementById('makerov').hidden)return;mkPreview();mkRaf=requestAnimationFrame(loop);};loop();}
 function mkCost(){if(!MK)return 0;const old=MK.edit!=null?MK.origPows:[];return cPows(MK).filter(x=>!old.includes(x)).reduce((a,x)=>a+POWCOST[BBY[x].rar],0)+(MK.edit==null?150:0);}
 function mkSync(full){const f=document.getElementById('mkForm');
   if(full){f.mkName.value=MK.name;f.mkCol.value=MK.col;
-    ['mkPow','mkPow2','mkPow3'].forEach((nm,k)=>{const sel=f[nm];sel.innerHTML='';if(k){const o=document.createElement('option');o.value='';o.textContent='None';sel.appendChild(o);}for(const b of BALLS){if(b.custom)continue;const own=BSAVE.own[b.id]>0,o=document.createElement('option');o.value=b.id;o.disabled=!own;o.textContent=(own?'':'🔒 ')+b.name+' · '+RAR[b.rar].n+' · '+POWCOST[b.rar]+' coins';sel.appendChild(o);}sel.value=MK.pows[k]||'';});}
+    const sel=f.mkPowAdd;sel.innerHTML='';const o0=document.createElement('option');o0.value='';o0.textContent='+ Add a power…';sel.appendChild(o0);
+    for(const b of BALLS){if(b.custom||MK.pows.includes(b.id))continue;const own=BSAVE.own[b.id]>0,o=document.createElement('option');o.value=b.id;o.disabled=!own;o.textContent=(own?'':'🔒 ')+b.name+' · '+RAR[b.rar].n+' · '+POWCOST[b.rar]+' coins';sel.appendChild(o);}
+    const list=document.getElementById('mkPowList');list.innerHTML='';MK.pows.forEach((id,i)=>{const d=BBY[id];if(!d)return;const chip=document.createElement('span');chip.className='pow-chip';chip.style.borderColor=RAR[d.rar].c;
+      const t=document.createElement('span');t.textContent=d.name.replace(' Ball','');chip.appendChild(t);if(MK.pows.length>1){const x=document.createElement('button');x.type='button';x.textContent='×';x.setAttribute('aria-label','Remove '+d.name);x.onclick=()=>{MK.pows.splice(i,1);mkSync(true);};chip.appendChild(x);}list.appendChild(chip);});
+    document.getElementById('mkPowCount').textContent=MK.pows.length+' power'+(MK.pows.length>1?'s':'');}
   for(const k of ['size','face'])document.querySelectorAll('[data-mk'+k+']').forEach(c=>c.setAttribute('aria-pressed',c.dataset['mk'+k]===MK[k]?'true':'false'));
   for(const k of ['hp','spd','dmg']){f['mk_'+k].value=MK[k];}
   const left=10-MK.hp-MK.spd-MK.dmg;document.getElementById('mkPts').textContent=left+' points left';
   const d=customDef(MK,0);document.getElementById('mkStats').textContent=`HP ${d.hp} · Speed ${d.spd} · Bonk damage ${d.dmg}`;
-  document.getElementById('mkPowInfo').textContent=cPows(MK).map(x=>BBY[x].name.replace(' Ball','')+': '+BBY[x].info).join('  ·  ')+(cPows(MK).length>1?'  (each extra power: -10 HP)':'');
+  document.getElementById('mkPowInfo').textContent=cPows(MK).map(x=>BBY[x].name.replace(' Ball','')+': '+BBY[x].info).join('  ·  ')+(cPows(MK).length>1?'  (each extra power: -6 HP, never below 40)':'');
   const cost=mkCost(),btn=document.getElementById('mkGo');btn.textContent=MK.edit!=null?(cost?'Save changes · '+cost+' coins':'Save changes · free'):'Create ball · '+cost+' coins';
   document.getElementById('mkCoins').textContent=(BSAVE.inf?'∞':BSAVE.coins)+' coins';
   const maxed=MK.edit==null&&(BSAVE.custom||[]).length>=6,locked=cPows(MK).some(x=>!(BSAVE.own[x]>0));btn.disabled=BSAVE.coins<cost||maxed||locked;document.getElementById('mkMsg').textContent=locked?'You need to own a ball to copy its power.':maxed?'You can have 6 custom balls. Edit one instead.':BSAVE.coins<cost?'Not enough coins yet. Win some duels!':'';}
@@ -3850,7 +3857,7 @@ document.getElementById('invNo').onclick=()=>{document.getElementById('invToast'
 document.getElementById('m-ball').onclick=()=>{audio();menu.hidden=true;refreshBallOv();document.getElementById('gachaRes').hidden=true;ballov.hidden=false;};
 {const f=document.getElementById('mkForm'),sw=document.getElementById('mkSw');
  for(const c of ['#ff4fd8','#ff5a4e','#ffb02e','#ffe066','#8bdc5a','#38e0c0','#38bdf8','#9b6bff','#f6f0e4','#3a3f5c']){const b=document.createElement('button');b.type='button';b.className='sw';b.style.background=c;b.setAttribute('aria-label','Color '+c);b.onclick=()=>{MK.col=c;f.mkCol.value=c;mkSync();};sw.appendChild(b);}
- f.mkName.oninput=()=>{MK.name=f.mkName.value;};f.mkCol.oninput=()=>{MK.col=f.mkCol.value;mkSync();};['mkPow','mkPow2','mkPow3'].forEach((nm,k)=>f[nm].onchange=()=>{const v=f[nm].value||null;MK.pows=MK.pows.map((x,j)=>j!==k&&x===v?null:x);MK.pows[k]=v||(k?null:'basic');mkSync(true);});
+ f.mkName.oninput=()=>{MK.name=f.mkName.value;};f.mkCol.oninput=()=>{MK.col=f.mkCol.value;mkSync();};f.mkPowAdd.onchange=()=>{const v=f.mkPowAdd.value;if(v&&!MK.pows.includes(v))MK.pows.push(v);mkSync(true);};
  document.querySelectorAll('[data-mksize]').forEach(b=>b.onclick=()=>{MK.size=b.dataset.mksize;mkSync();});document.querySelectorAll('[data-mkface]').forEach(b=>b.onclick=()=>{MK.face=b.dataset.mkface;mkSync();});
  for(const k of ['hp','spd','dmg'])f['mk_'+k].oninput=()=>{let v=+f['mk_'+k].value;const others=['hp','spd','dmg'].filter(x=>x!==k).reduce((a,x)=>a+MK[x],0);v=Math.min(v,10-others);MK[k]=v;mkSync();};
  document.getElementById('mkGo').onclick=()=>{audio();mkCreate();};
