@@ -36,6 +36,7 @@ h1 span{color:var(--p1)}
 h2{font-size:clamp(24px,5vw,38px);color:var(--accent);text-shadow:3px 3px 0 var(--line)}
 .tag{margin:0;color:var(--muted);font-size:16px;max-width:52ch;line-height:1.45}
 .tag b{color:var(--ink)}
+.net-where{font-size:12px;color:var(--muted);margin:10px 0 0}.net-gh{color:#7dffb0;font-weight:800}
 .net-kind{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:4px 0 12px}
 .net-kind small{flex-basis:100%;color:var(--muted);font-size:12px}
 .net-kind .chip[aria-pressed=true]{background:var(--ink);color:var(--bg,#151030)}
@@ -167,7 +168,7 @@ kbd{font:600 12px var(--body);background:var(--bg);color:var(--ink);border:1px s
 </style>
 
 <div id="wrap"><div id="stage"><canvas id="cv"></canvas></div></div>
-<div id="hint">\ menu · M sound · ` debug · v33</div>
+<div id="hint">\ menu · M sound · ` debug · v34</div>
 
 <div id="menu" class="ov">
   <div class="card">
@@ -326,7 +327,7 @@ kbd{font:600 12px var(--body);background:var(--bg);color:var(--ink);border:1px s
   <div class="card wide net">
     <div class="top"><h2>Play online</h2><button class="chip" id="netBack" type="button">Back</button></div>
     <div class="net-kind"><span class="lbl">Game</span><button class="chip" type="button" data-netkind="fight">Ragdoll fight</button><button class="chip" type="button" data-netkind="ball">Ball VS Ball</button><small id="netKindTip"></small></div>
-    <div id="netNo" class="tag">Online play couldn't connect. Check your internet connection, then close and reopen this screen.</div>
+    <div id="netNo" class="tag"><span id="netNoTxt">Online play couldn't connect. Check your internet connection, then close and reopen this screen.</span> <a href="https://charleskrebs.github.io/ragdoll-rumble/" target="_blank" rel="noopener" class="net-gh">Open the GitHub version</a></div>
     <div id="netYes">
       <p class="tag" style="font-size:14px">You're playing as <b id="netMe"></b>. <span id="netGuestTip">Sign in to an account so friends can invite you by your username.</span></p>
       <div class="net-grid">
@@ -338,6 +339,7 @@ kbd{font:600 12px var(--body);background:var(--bg);color:var(--ink);border:1px s
       <div class="lbl">Online now</div><div id="netList" class="net-list"></div>
     </div>
     <div id="netMsg" class="ac-msg" role="status"></div>
+    <p class="net-where" id="netWhere"></p>
   </div>
 </div>
 <div id="invToast" class="inv-toast" hidden role="alert"><div><b id="invFrom"></b> invited you to <span id="invWhat">Ball VS Ball</span>!</div><div class="ac-row"><button class="btn gold" type="button" id="invYes">Join</button><button class="chip" type="button" id="invNo">No thanks</button></div></div>
@@ -2589,7 +2591,9 @@ const NET={kind:'ball',from:'ball',api:null,ok:false,lobbyPeers:[],game:null,cod
   over(){this.lobbySet({st:'idle'});const gm=this.game;this.game=null;this.op=null;setTimeout(()=>{if(gm)gm.leave().catch(()=>{});},4000);},
   lobbySet(p){if(this.api)this.api.presence(Object.assign({nm:this.name()},p)).catch(()=>{});}
 };
-async function netInit(){try{let r=null;if(window.claude&&claude.use){try{r=await claude.use('room');}catch(e){r=null;}}
+const NET_GH='https://charleskrebs.github.io/ragdoll-rumble/',onClaude=()=>!!(window.claude&&claude.use);
+function netBlocked(){NET.ok=false;NET.blocked=1;const t=document.getElementById('netNoTxt');if(t)t.textContent='Online play on claude.ai only works for people who are signed in to Claude and have this page shared with them. If you or your friend is a guest, both of you open the GitHub version instead (it works for everyone, no account needed):';netUI();}
+async function netInit(){try{let r=null;if(onClaude()){try{r=await claude.use('room');}catch(e){r=null;}if(!r)return netBlocked();}
   if(!r){if(!(await p2pLoad()))return netUI();r=p2pApi();}NET.api=r;NET.ok=true;NET.p2p=!!r.p2p;
   r.onPeers(ch=>{NET.lobbyPeers=ch.peers;netCheckInvites();netUI();},()=>{NET.ok=false;netUI();});NET.lobbySet({st:'idle',inv:null});netUI();}catch(e){netUI();}}
 function netCheckInvites(){const me=NET.name().toLowerCase();
@@ -2599,11 +2603,11 @@ function netCheckInvites(){const me=NET.name().toLowerCase();
 function netToast(from,code,kind){const t=document.getElementById('invToast');t.hidden=false;document.getElementById('invWhat').textContent=kind==='fight'?'a fight':'Ball VS Ball';t.dataset.kind=kind==='fight'?'fight':'ball';document.getElementById('invFrom').textContent=from;t.dataset.code=code;sfx('coin');sfx('go');}
 function newJoinCode(){const A='abcdefghjkmnpqrstuvwxyz23456789';let s='';for(let i=0;i<6;i++)s+=A[Math.floor(Math.random()*A.length)];return s;}
 async function netHost(){if(!NET.ok)return netMsg('Online play isn\'t available here.');await netLeave();NET.host=true;NET.code=newJoinCode();
-  try{NET.game=await NET.api.join('rr-'+NET.code);}catch(e){NET.game=null;return netMsg('Couldn\'t open a match ('+(e&&e.code||'error')+'). Try again.');}
+  try{NET.game=await NET.api.join('rr-'+NET.code);}catch(e){NET.game=null;netFail(e,'Couldn\'t open a match ('+(e&&e.code||'error')+'). Try again.');return false;}
   NET.g={start:0,opp:null,kind:NET.kind};NET.game.presence({nm:NET.name(),role:'host',g:NET.g}).catch(()=>{});NET.lobbySet({st:'hosting'});netWatchGame();netUI();return true;}
 async function netJoin(code){code=String(code||'').toLowerCase().replace(/[^a-z0-9]/g,'');if(!/^[a-z0-9]{6}$/.test(code))return netMsg('Join codes are 6 letters and numbers.');
   if(!NET.ok)return netMsg('Online play isn\'t available here.');await netLeave();NET.host=false;NET.code=code;
-  try{NET.game=await NET.api.join('rr-'+code);}catch(e){NET.game=null;return netMsg(e&&e.code==='not_found'?'No match with that code. Check it, and make sure the host still has it open.':'Couldn\'t join that match.');}
+  try{NET.game=await NET.api.join('rr-'+code);}catch(e){NET.game=null;return netFail(e,null)||netMsg(e&&e.code==='not_found'?'No match with that code. Check it, and make sure the host still has it open.':'Couldn\'t join that match.');}
   NET.game.presence({nm:NET.name(),role:'guest'}).catch(()=>{});NET.lobbySet({st:'joining'});netWatchGame();netUI();netMsg('Joining '+code.toUpperCase()+'… waiting for the host.',1);}
 async function netLeave(){const g=NET.game;NET.game=null;NET.op=null;NET.oppLabel=null;NET.code=null;NET.inviting=null;NET.mashOut=0;NET.mashSeen=0;NET.lastApplied=null;NET.sentLock=null;NET.lobbySet({st:'idle',inv:null});if(g){try{await g.leave();}catch(e){}}}
 function netWatchGame(){const gm=NET.game;gm.onPeers(ch=>{if(NET.game!==gm)return;const me=ch.peers.find(p=>p.isMe);if(me)NET.meLabel=me.peer;
@@ -2620,9 +2624,11 @@ function netInvite(name){name=String(name||'').trim();if(!name)return netMsg('Ty
     const online=NET.lobbyPeers.some(p=>!p.isMe&&String(p.presence&&p.presence.nm||'').toLowerCase()===name.toLowerCase());
     netMsg(online?'Invite sent to '+name+'! Waiting for them to join…':name+' isn\'t online right now. The invite will pop up if they open the game while you wait here. You can also send them the join code.',online?1:0);};
   if(!NET.game||!NET.host)netHost().then(ok=>{if(ok)go();});else go();}
+function netFail(e,fallback){const c=e&&e.code;if(c==='not_permitted'||c==='not_granted'){netBlocked();netMsg('You can\'t play online in this claude.ai view. Use the GitHub version link above (both players need to be on it).');return true;}
+  if(NET.p2p&&(c==='upstream_error'||c==='timeout')){netMsg('Couldn\'t reach the matchmaking server. Check your internet and try again in a minute.');return true;}if(fallback)netMsg(fallback);return !!fallback;}
 function netMsg(t,ok){const m=document.getElementById('netMsg');if(m){m.textContent=t;m.className='ac-msg'+(ok?' ok':'');}}
 function netUI(){const ov=document.getElementById('netov');if(!ov)return;
-  document.getElementById('netNo').hidden=NET.ok;document.getElementById('netYes').hidden=!NET.ok;document.getElementById('netMe').textContent=NET.name();
+  document.getElementById('netNo').hidden=NET.ok;{const w=document.getElementById('netWhere');if(w)w.textContent=onClaude()?'You\'re on the claude.ai version. Your friend has to open this same claude.ai page; players on the GitHub version can\'t see you.':'You\'re on the GitHub / downloaded version. Your friend has to use this version too; players on claude.ai can\'t see you.';}document.getElementById('netYes').hidden=!NET.ok;document.getElementById('netMe').textContent=NET.name();
   document.getElementById('netGuestTip').hidden=!!ACCT.user;
   document.querySelectorAll('[data-netkind]').forEach(b=>{b.setAttribute('aria-pressed',b.dataset.netkind===NET.kind);b.disabled=!!NET.game;});document.getElementById('netKindTip').textContent=NET.kind==='fight'?'Ragdoll fight: 1v1, first to 3 rounds. You each pick a fighter.':'Ball VS Ball: draft balls and aim, best of the rounds.';
   const hosting=NET.host&&NET.game&&!NET.oppLabel;document.getElementById('netCodeBox').hidden=!hosting;if(hosting)document.getElementById('netCode').textContent=NET.code.toUpperCase();
@@ -4014,7 +4020,7 @@ function drawDebug(){
   if(lastErr&&errShow>0){errShow--;ctx.fillStyle='rgba(120,0,0,.85)';ctx.fillRect(10,H-46,W-20,36);ctx.font='600 12px Rubik, sans-serif';ctx.textAlign='left';ctx.fillStyle='#ffffff';ctx.fillText('Something broke (the game kept going): '+lastErr.message,18,H-31);ctx.fillStyle='rgba(255,255,255,.7)';ctx.fillText(lastErr.stack.trim().slice(0,120),18,H-16);}
   if(!dbg)return;
   const P=fighters.find(F=>!F.cpu)||fighters[0];if(!P||!P.pts)return;
-  const L=['you found the debug panel. secret code: 404NOTFOUND','v33  state:'+state+(tut?' lesson:'+(tut.i+1)+' '+tut.cnt+'/'+LESSONS[tut.i].n:''),
+  const L=['you found the debug panel. secret code: 404NOTFOUND','v34  state:'+state+(tut?' lesson:'+(tut.i+1)+' '+tut.cnt+'/'+LESSONS[tut.i].n:''),
     P.name+' '+P.ch.name+'  hp:'+Math.round(P.hp)+' ult:'+Math.round(P.ult)+' dom:'+Math.round(P.dm||0),
     'attack:'+(P.atk?P.atk.k+' '+P.atk.t+'/'+P.atk.d:'none')+' cooldown:'+P.cd+' stun:'+P.stun+' control:'+P.ctrl.toFixed(2),
     'block:'+P.block+' roll:'+P.roll+' charge:'+P.charge+' sit:'+P.sit+' chicken:'+P.chicken+' iced:'+P.iced+' asleep:'+P.sleep,
