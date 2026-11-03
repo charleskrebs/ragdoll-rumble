@@ -1795,9 +1795,12 @@ function bvbStep(){
   const clk=S.click;S.click=null;
   if(S.ph==='draft'){const p=S.dq[0],m=MAPS[p.map];
     if(edge(m.l))S.cur=(S.cur+2)%3,sfx('click');if(edge(m.r))S.cur=(S.cur+1)%3,sfx('click');
-    let pickI=edge(m.p)||edge(['Enter'])?S.cur:-1,rr=edge(m.a);
+    let pickI=edge(m.p)||edge(['Enter'])?S.cur:-1,rr=edge(m.a),cust=null;const cs=myCustoms();
+    if(p.map!=='p2')cs.forEach((d,i)=>{if(edge(['Digit'+(i+1)]))cust=d.id;});
+    if(clk)cs.forEach((d,i)=>{const c=customRect(i,cs.length);if(clk.x>c.x&&clk.x<c.x+c.w&&clk.y>c.y&&clk.y<c.y+c.h)cust=d.id;});
+    if(cust){p.pick=cust;sfx('go');S.dq.shift();S.cur=1;if(!S.dq.length)bvbAfterDraft();pressed.clear();return;}
     if(clk){for(let i=0;i<3;i++){const c=cardRect(i);if(clk.x>c.x&&clk.x<c.x+c.w&&clk.y>c.y&&clk.y<c.y+c.h)pickI=i;}const rb=rerollRect();if(clk.x>rb.x&&clk.x<rb.x+rb.w&&clk.y>rb.y&&clk.y<rb.y+rb.h)rr=true;}
-    if(S.mouse){for(let i=0;i<3;i++){const c=cardRect(i);if(S.mouse.x>c.x&&S.mouse.x<c.x+c.w&&S.mouse.y>c.y&&S.mouse.y<c.y+c.h)S.cur=i;}S.mouse=null;}
+    if(S.mouse){S.hoverC=-1;cs.forEach((d,i)=>{const c=customRect(i,cs.length);if(S.mouse.x>c.x&&S.mouse.x<c.x+c.w&&S.mouse.y>c.y&&S.mouse.y<c.y+c.h)S.hoverC=i;});for(let i=0;i<3;i++){const c=cardRect(i);if(S.mouse.x>c.x&&S.mouse.x<c.x+c.w&&S.mouse.y>c.y&&S.mouse.y<c.y+c.h)S.cur=i;}S.mouse=null;}
     if(rr){if(BSAVE.coins>=20){BSAVE.coins-=20;bsave();p.offer=offers();sfx('coin');}else{sfx('block');banner={txt:'NOT ENOUGH COINS',t:40};}}
     else if(pickI>=0){p.pick=p.offer[pickI];sfx('go');S.dq.shift();S.cur=1;if(!S.dq.length)bvbAfterDraft();}
   }
@@ -1841,7 +1844,9 @@ function bvbOver(wt){const S=BG;S.ph='over';const human=S.pl.find(p=>!p.cpu&&!p.
   document.getElementById('again').focus();sfx(youWon?'coin':'ko');}
 function heartPos(team,i){const px=team===0?28:AR0.x+AR0.s+28;return{x:px+22+i*34,y:AR0.y+22};}
 function cardRect(i){const w=200,h=262,gap=22,x0=W/2-(3*w+2*gap)/2;return{x:x0+i*(w+gap),y:146,w,h};}
-function rerollRect(){return{x:W/2-110,y:424,w:220,h:40};}
+function rerollRect(){return{x:W/2-110,y:418,w:220,h:36};}
+const myCustoms=()=>BALLS.filter(b=>b.custom&&BSAVE.own[b.id]);
+function customRect(i,n){const w=Math.min(150,(W-60-(n-1)*8)/n),x0=W/2-(n*w+(n-1)*8)/2;return{x:x0+i*(w+8),y:494,w,h:36};}
 /* ---------- drawing ---------- */
 function drawBallBody(g,x,y,r,def,look,o){o=o||{};
   g.save();g.translate(x,y);
@@ -2091,14 +2096,17 @@ function drawDraft(){const S=BG,p=S.dq[0];if(!p){if(S.net){ctx.fillStyle='rgba(6
     drawBallBody(ctx,c.x+c.w/2,c.y+80+Math.sin(tick*.06+i)*4,34,d,{x:Math.sin(tick*.03+i)*.6,y:.1},{t:tick});
     ctx.font='800 10px Rubik, sans-serif';ctx.textAlign='center';ctx.fillStyle=rc;const stn=bstars(id);ctx.fillText(RAR[d.rar].n+(stn>1?'  '+'★'.repeat(stn):''),c.x+c.w/2,c.y+138);
     ctx.font=fitFont(d.name.toUpperCase(),c.w-20,17)+'px Bungee, sans-serif';ctx.fillStyle='#f6f0e4';ctx.fillText(d.name.toUpperCase(),c.x+c.w/2,c.y+160);
-    ctx.font='500 12px Rubik, sans-serif';ctx.fillStyle='#c9c2e0';ctx.textAlign='left';bWrap(d.info,c.x+14,c.y+182,c.w-28,15);
+    ctx.font='500 12px Rubik, sans-serif';ctx.fillStyle='#c9c2e0';ctx.textAlign='left';bWrap(d.info,c.x+14,c.y+182,c.w-28,15,5);
     ctx.font='800 10px Rubik, sans-serif';ctx.fillStyle='#a49cc4';ctx.textAlign='center';ctx.fillText('HP '+d.hp+'  ·  SPEED '+d.spd,c.x+c.w/2,c.y+c.h-12);
     ctx.restore();});
   const rb=rerollRect();ctx.fillStyle=BSAVE.coins>=20?'#ffd23f':'#4a4270';ctx.strokeStyle=INK;ctx.lineWidth=3;ctx.beginPath();ctx.roundRect(rb.x,rb.y,rb.w,rb.h,10);ctx.fill();ctx.stroke();
   ctx.font='14px Bungee, sans-serif';ctx.textAlign='center';ctx.fillStyle=INK;ctx.fillText('REROLL · 20 COINS',W/2,rb.y+26);
-  ctx.font='600 12px Rubik, sans-serif';ctx.fillStyle='rgba(246,240,228,.75)';const m=p.map==='p2'?'◀ ▶ choose · . pick · , reroll':'Click a card, or A / D then F · E to reroll';ctx.fillText(m+'   ·   coins: '+(BSAVE.inf?'∞':BSAVE.coins),W/2,rb.y+62);
+  ctx.font='600 12px Rubik, sans-serif';ctx.fillStyle='rgba(246,240,228,.75)';const m=p.map==='p2'?'◀ ▶ choose · . pick · , reroll':'Click a card, or A / D then F · E to reroll';const cs=myCustoms();ctx.fillText(m+'   ·   coins: '+(BSAVE.inf?'∞':BSAVE.coins),W/2,rb.y+54);
+  if(cs.length){ctx.font='800 10px Rubik, sans-serif';ctx.fillStyle='#ff4fd8';ctx.fillText('YOUR CUSTOM BALLS · always available'+(p.map!=='p2'?' · or press 1-'+cs.length:''),W/2,488);
+    cs.forEach((d,i)=>{const c=customRect(i,cs.length),hov=S.hoverC===i;ctx.fillStyle=hov?'#3a1a3a':'#24122a';ctx.strokeStyle='#ff4fd8';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(c.x,c.y,c.w,c.h,9);ctx.fill();ctx.stroke();
+      drawBallBody(ctx,c.x+18,c.y+18,11,d,{x:.4,y:0},{t:tick});ctx.font=fitFont(d.name,c.w-40,13)+'px Bungee, sans-serif';ctx.textAlign='left';ctx.fillStyle='#f6f0e4';ctx.fillText(d.name,c.x+34,c.y+23);ctx.textAlign='center';});}
 }
-function bWrap(t,x,y,w,lh){const ws=t.split(" ");let cur="",yy=y;for(const wd of ws){const tt=cur?cur+" "+wd:wd;if(ctx.measureText(tt).width>w&&cur){ctx.fillText(cur,x,yy);yy+=lh;cur=wd;}else cur=tt;}if(cur)ctx.fillText(cur,x,yy);}
+function bWrap(t,x,y,w,lh,maxL){const ws=t.split(" ");let cur="",yy=y,n=0;for(const wd of ws){const tt=cur?cur+" "+wd:wd;if(ctx.measureText(tt).width>w&&cur){if(maxL&&n===maxL-1){let c2=cur;while(c2&&ctx.measureText(c2+"…").width>w)c2=c2.slice(0,-1);ctx.fillText(c2+"…",x,yy);return;}ctx.fillText(cur,x,yy);yy+=lh;n++;cur=wd;}else cur=tt;}if(cur)ctx.fillText(cur,x,yy);}
 function ballRender(){
   ctx=mainCtx;ctx.setTransform(scale*dpr,0,0,scale*dpr,0,0);ctx.lineJoin='round';const S=BG;if(!S)return;
   if(S.cine){const C=S.cine,cf=BDOM[C.k],b=C.b;draw3DCine({t:C.t,dur:C.dur,col:cf.col,rim:'#ffffff',bg:cf.bg,name:cf.n,who:b.def.name.toUpperCase()+' · '+b.p.name,theme:{razor:'spikes',abyss:'rings',garden:'pillars',tide:'cubes',eye:'eye',pocket:'rings',evolve:'cubes',echo:'cubes',sculpt:'pillars',storm:'rings',forge:'spikes',mirrorhall:'cubes',carnival:'pillars',clock:'rings',depths:'pillars',starfall:'cubes'}[C.k]||themeOf(C.k),seed:C.k.length*977,skip:'press F to skip',
