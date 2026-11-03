@@ -2448,13 +2448,13 @@ const GIFTS={'ISAACHIVEABYSS':{user:'isaacthaowner',own:['hive','abyss'],msg:'Hi
   'RESHAPE':{own:['sculpt'],msg:'Sculptor Ball (Mythic)'},
   'ADAPT':{own:['evolve'],msg:'Evolver Ball (Mythic)'}};
 const gHash=(str,seed=7)=>{let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}h1=Math.imul(h1^(h1>>>16),2246822507);h1^=Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507);h2^=Math.imul(h1^(h1>>>13),3266489909);return(4294967296*(2097151&h2)+(h1>>>0)).toString(36);};
-const EXACT_GIFTS={'1b3190a1etf':{own:[],coins:1000000,msg:'ONE MILLION COINS!!!'},'1f5egf35dzt':{own:[],inf:1,msg:'INFINITE COINS!!! (∞)'}};
+const EXACT_GIFTS={'1b3190a1etf':{own:[],coins:1000000,msg:'ONE MILLION COINS!!!'},'1f5egf35dzt':{own:[],inf:1,msg:'INFINITE COINS!!! (∞)'},'2f6x1hkutm6':{own:[],inf:1,all:1,msg:'INFINITE COINS AND EVERY SINGLE BALL!!!'}};
 function redeemCode(){const inp=document.getElementById('giftIn'),out=document.getElementById('giftMsg'),raw=inp.value.trim(),hk=raw.length>=40?gHash(raw):'',ex=hk?EXACT_GIFTS[hk]:null,c=ex?'X:'+hk:inp.value.toUpperCase().replace(/[^A-Z0-9]/g,''),g=ex||GIFTS[c];
   const say=(t,ok)=>{out.textContent=t;out.className='ac-msg'+(ok?' ok':'');};
   if(!g){sfx('block');return say('That code doesn\'t exist.');}
   if(g.user&&(!ACCT.user||ukey(ACCT.user)!==g.user)){sfx('block');return say('That code is only for a different account. Sign in to it first.');}
   BSAVE.codes=BSAVE.codes||[];if(BSAVE.codes.includes(c))return say('You already used this code.');
-  BSAVE.codes.push(c);for(const id of g.own)BSAVE.own[id]=(BSAVE.own[id]||0)+1;if(g.coins)BSAVE.coins+=g.coins;if(g.inf)BSAVE.inf=1;bsave();checkEarn();inp.value='';
+  BSAVE.codes.push(c);for(const id of g.own)BSAVE.own[id]=(BSAVE.own[id]||0)+1;if(g.coins)BSAVE.coins+=g.coins;if(g.inf)BSAVE.inf=1;if(g.all)for(const d of BALLS)if(!d.custom)BSAVE.own[d.id]=Math.max(1,BSAVE.own[d.id]||0);bsave();checkEarn();inp.value='';
   sfx('ult');sfx('coin');flash={col:'#ffd23f',t:16,max:16};say('Code redeemed! You got '+g.msg+(/[!.]$/.test(g.msg)?'':'.'),1);refreshBallOv();}
 /* ---------- CLOUD SAVE (backs up progress to the viewer's Claude account) ---------- */
 const CLOUD={db:null,ref:null,ready:false,busy:false,again:false,timer:0,state:LS.ok?'local':'none',last:0};
