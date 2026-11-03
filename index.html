@@ -320,7 +320,7 @@ kbd{font:600 12px var(--body);background:var(--bg);color:var(--ink);border:1px s
 <div id="netov" class="ov" hidden>
   <div class="card wide net">
     <div class="top"><h2>Play online</h2><button class="chip" id="netBack" type="button">Back</button></div>
-    <div id="netNo" class="tag">Online play works on the game's claude.ai link (not the downloaded file). Your friends need access to the game too: share it with them from the Share menu on claude.ai.</div>
+    <div id="netNo" class="tag">Online play couldn't connect. Check your internet connection, then close and reopen this screen.</div>
     <div id="netYes">
       <p class="tag" style="font-size:14px">You're playing as <b id="netMe"></b>. <span id="netGuestTip">Sign in to an account so friends can invite you by your username.</span></p>
       <div class="net-grid">
@@ -2499,6 +2499,44 @@ function cloudState(s){CLOUD.state=s;const txt={cloud:'☁ Saved to your Claude 
   const w=document.getElementById('saveWarn');if(w)w.hidden=s!=='none';}
 addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&CLOUD.ready){clearTimeout(CLOUD.timer);cloudPush();}});
 setTimeout(()=>cloudState(CLOUD.state),0);cloudInit();
+/* ---------- P2P fallback for online play outside claude.ai (GitHub Pages, downloaded file) ----------
+   Uses PeerJS (a free public matchmaking server) to connect two browsers directly.
+   It mimics the small part of the claude.ai "room" API that the online code uses. */
+const P2P_PRE='rrumble26';
+const p2pSlug=n=>String(n||'').toLowerCase().replace(/[^a-z0-9_]/g,'').slice(0,24);
+function p2pLoad(){return new Promise(res=>{if(window.Peer)return res(true);const s=document.createElement('script');s.src='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';s.onload=()=>res(!!window.Peer);s.onerror=()=>res(false);document.head.appendChild(s);setTimeout(()=>res(!!window.Peer),12000);});}
+function p2pApi(){
+  const api={p2p:true,_pres:{},_h:[],_lobby:null,_lobbyName:null,
+    presence(patch){for(const [k,v] of Object.entries(patch||{})){if(v===null)delete this._pres[k];else this._pres[k]=v;}this._ensureLobby();this._fire();return Promise.resolve();},
+    onPeers(h){this._h.push(h);setTimeout(()=>this._fire(),0);return()=>{};},
+    _fire(){const ps=[{peer:'me',isMe:true,guest:false,kind:'viewer',presence:Object.assign({},this._pres)}];for(const h of this._h)try{h({peers:ps,joined:[],left:[],updated:ps});}catch(e){}},
+    _ensureLobby(){const want=p2pSlug(this._pres.nm);if(!want||want===this._lobbyName)return;this._lobbyName=want;if(this._lobby){try{this._lobby.destroy();}catch(e){}}
+      const pr=new Peer(P2P_PRE+'-u-'+want);this._lobby=pr;
+      pr.on('connection',c=>{c.on('data',d=>{if(d&&d.t==='inv'&&/^[a-z0-9]{6}$/.test(String(d.code||'')))netToast(String(d.from||'Someone').slice(0,20),d.code);});});
+      pr.on('error',()=>{});},
+    invite(name,code){return new Promise(res=>{const src=this._lobby&&!this._lobby.destroyed?this._lobby:new Peer();let done=false;const fin=v=>{if(!done){done=true;res(v);}};
+      const go=()=>{const c=src.connect(P2P_PRE+'-u-'+p2pSlug(name),{reliable:true});c.on('open',()=>{c.send({t:'inv',from:NET.name(),code});setTimeout(()=>c.close(),1500);fin(true);});c.on('error',()=>fin(false));};
+      if(src.open)go();else src.on('open',go);src.on('error',e=>{if(e&&e.type==='peer-unavailable')fin(false);});setTimeout(()=>fin(false),7000);});},
+    join(name){return p2pJoin(name);}};
+  return api;}
+function p2pJoin(name){return new Promise((resolve,reject)=>{
+  const hostId=P2P_PRE+'-g-'+name.replace(/[^a-z0-9_-]/g,'');let peer,conn=null,settled=false;
+  const room={name,_pres:{},_remote:null,_h:[],meId:null,remId:null,
+    presence(patch){for(const [k,v] of Object.entries(patch||{})){if(v===null)delete this._pres[k];else this._pres[k]=v;}if(conn&&conn.open)try{conn.send({t:'p',patch});}catch(e){}this._fire();return Promise.resolve();},
+    onPeers(h){this._h.push(h);setTimeout(()=>this._fire(),0);return()=>{};},
+    _fire(left){const ps=[{peer:this.meId||'me',isMe:true,guest:false,kind:'viewer',presence:Object.assign({},this._pres)}];if(this._remote)ps.push({peer:this.remId,isMe:false,guest:false,kind:'viewer',presence:Object.assign({},this._remote)});
+      for(const h of this._h)try{h({peers:ps,joined:[],left:left?[{peer:left}]:[],updated:ps});}catch(e){}},
+    leave(){try{conn&&conn.close();}catch(e){}try{peer&&peer.destroy();}catch(e){}this._h=[];return Promise.resolve();},
+    connected(){return!!(conn&&conn.open);}};
+  const wire=c=>{conn=c;room.remId=c.peer;c.on('open',()=>{c.send({t:'p',patch:room._pres});if(!settled){settled=true;resolve(room);}});
+    c.on('data',d=>{if(d&&d.t==='p'&&d.patch&&typeof d.patch==='object'){room._remote=room._remote||{};for(const [k,v] of Object.entries(d.patch)){if(v===null)delete room._remote[k];else room._remote[k]=v;}room._fire();}});
+    c.on('close',()=>{const was=room.remId;room._remote=null;conn=null;room._fire(was);});};
+  if(NET.host){peer=new Peer(hostId);peer.on('open',id=>{room.meId=id;settled=true;resolve(room);});
+    peer.on('connection',c=>{if(conn&&conn.open){c.on('open',()=>c.close());return;}wire(c);});
+    peer.on('error',e=>{if(!settled){settled=true;reject({code:e&&e.type==='unavailable-id'?'taken':'upstream_error'});}});}
+  else{peer=new Peer();peer.on('open',id=>{room.meId=id;wire(peer.connect(hostId,{reliable:true}));});
+    peer.on('error',e=>{if(!settled){settled=true;reject({code:e&&e.type==='peer-unavailable'?'not_found':'upstream_error'});}});}
+  setTimeout(()=>{if(!settled){settled=true;reject({code:'timeout'});}},15000);});}
 /* ---------- ONLINE: invites by username or join code (Ball VS Ball 1v1) ---------- */
 function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 const NET={api:null,ok:false,lobbyPeers:[],game:null,code:null,host:false,meLabel:null,oppLabel:null,op:null,g:{},round:0,goDone:false,rng:Math.random,
@@ -2527,7 +2565,8 @@ const NET={api:null,ok:false,lobbyPeers:[],game:null,code:null,host:false,meLabe
   over(){this.lobbySet({st:'idle'});const gm=this.game;this.game=null;this.op=null;setTimeout(()=>{if(gm)gm.leave().catch(()=>{});},4000);},
   lobbySet(p){if(this.api)this.api.presence(Object.assign({nm:this.name()},p)).catch(()=>{});}
 };
-async function netInit(){try{if(!window.claude||!claude.use)return netUI();const r=await claude.use('room');if(!r)return netUI();NET.api=r;NET.ok=true;
+async function netInit(){try{let r=null;if(window.claude&&claude.use){try{r=await claude.use('room');}catch(e){r=null;}}
+  if(!r){if(!(await p2pLoad()))return netUI();r=p2pApi();}NET.api=r;NET.ok=true;NET.p2p=!!r.p2p;
   r.onPeers(ch=>{NET.lobbyPeers=ch.peers;netCheckInvites();netUI();},()=>{NET.ok=false;netUI();});NET.lobbySet({st:'idle',inv:null});netUI();}catch(e){netUI();}}
 function netCheckInvites(){const me=NET.name().toLowerCase();
   for(const p of NET.lobbyPeers){if(p.isMe)continue;const inv=p.presence&&p.presence.inv;if(!inv||typeof inv!=='object')continue;
@@ -2540,7 +2579,7 @@ async function netHost(){if(!NET.ok)return netMsg('Online play isn\'t available 
   NET.g={start:0,opp:null};NET.game.presence({nm:NET.name(),role:'host',g:NET.g}).catch(()=>{});NET.lobbySet({st:'hosting'});netWatchGame();netUI();return true;}
 async function netJoin(code){code=String(code||'').toLowerCase().replace(/[^a-z0-9]/g,'');if(!/^[a-z0-9]{6}$/.test(code))return netMsg('Join codes are 6 letters and numbers.');
   if(!NET.ok)return netMsg('Online play isn\'t available here.');await netLeave();NET.host=false;NET.code=code;
-  try{NET.game=await NET.api.join('rr-'+code);}catch(e){NET.game=null;return netMsg('Couldn\'t join that match.');}
+  try{NET.game=await NET.api.join('rr-'+code);}catch(e){NET.game=null;return netMsg(e&&e.code==='not_found'?'No match with that code. Check it, and make sure the host still has it open.':'Couldn\'t join that match.');}
   NET.game.presence({nm:NET.name(),role:'guest'}).catch(()=>{});NET.lobbySet({st:'joining'});netWatchGame();netUI();netMsg('Joining '+code.toUpperCase()+'… waiting for the host.',1);}
 async function netLeave(){const g=NET.game;NET.game=null;NET.op=null;NET.oppLabel=null;NET.code=null;NET.inviting=null;NET.mashOut=0;NET.mashSeen=0;NET.lastApplied=null;NET.sentLock=null;NET.lobbySet({st:'idle',inv:null});if(g){try{await g.leave();}catch(e){}}}
 function netWatchGame(){const gm=NET.game;gm.onPeers(ch=>{if(NET.game!==gm)return;const me=ch.peers.find(p=>p.isMe);if(me)NET.meLabel=me.peer;
@@ -2551,7 +2590,9 @@ function netWatchGame(){const gm=NET.game;gm.onPeers(ch=>{if(NET.game!==gm)retur
 function netStart(){document.getElementById('netov').hidden=true;document.getElementById('invToast').hidden=true;ballov.hidden=true;menu.hidden=true;end.hidden=true;NET.lobbySet({st:'playing',inv:null});NET.round=0;startBall('online');}
 function netOppLeft(){const S=BG;if(S&&S.net&&S.ph!=='over'){S.ph='over';state='matchEnd';end.hidden=false;document.getElementById('endTxt').textContent='Your opponent left';document.getElementById('endSub').textContent='The match ended early. Host a new one from Ball VS Ball → Play online.';document.getElementById('again').textContent='Play online';}netLeave();}
 function netInvite(name){name=String(name||'').trim();if(!name)return netMsg('Type their username.');
-  const go=()=>{NET.inviting=name;NET.lobbySet({st:'hosting',inv:{to:name.toLowerCase(),code:NET.code,at:Date.now()}});
+  const go=()=>{NET.inviting=name;
+    if(NET.p2p){netMsg('Sending invite to '+name+'…',1);NET.api.invite(name,NET.code).then(ok=>netMsg(ok?'Invite sent to '+name+'! Waiting for them to join…':name+' isn\'t on the Play online screen right now. Ask them to open it, or send them the join code '+NET.code.toUpperCase()+'.',ok?1:0));return;}
+    NET.lobbySet({st:'hosting',inv:{to:name.toLowerCase(),code:NET.code,at:Date.now()}});
     const online=NET.lobbyPeers.some(p=>!p.isMe&&String(p.presence&&p.presence.nm||'').toLowerCase()===name.toLowerCase());
     netMsg(online?'Invite sent to '+name+'! Waiting for them to join…':name+' isn\'t online right now. The invite will pop up if they open the game while you wait here. You can also send them the join code.',online?1:0);};
   if(!NET.game||!NET.host)netHost().then(ok=>{if(ok)go();});else go();}
@@ -2561,7 +2602,7 @@ function netUI(){const ov=document.getElementById('netov');if(!ov)return;
   document.getElementById('netGuestTip').hidden=!!ACCT.user;
   const hosting=NET.host&&NET.game&&!NET.oppLabel;document.getElementById('netCodeBox').hidden=!hosting;if(hosting)document.getElementById('netCode').textContent=NET.code.toUpperCase();
   const list=document.getElementById('netList');list.innerHTML='';const others=NET.lobbyPeers.filter(p=>!p.isMe&&p.presence&&p.presence.nm);
-  if(!others.length){const d=document.createElement('div');d.className='net-empty';d.textContent='Nobody else has the game open right now.';list.appendChild(d);}
+  if(!others.length){const d=document.createElement('div');d.className='net-empty';d.textContent=NET.p2p?'This version can\'t list who\'s online. Invite friends by username (they need the Play online screen open) or share your join code.':'Nobody else has the game open right now.';list.appendChild(d);}
   for(const p of others){const row=document.createElement('div');row.className='net-row';const nm=document.createElement('b');nm.textContent=String(p.presence.nm).slice(0,20)+(p.guest?' (guest)':'');
     const st=document.createElement('small');st.textContent={idle:'in the menu',hosting:'hosting a match',joining:'joining a match',playing:'in a match'}[p.presence.st]||'online';
     const b=document.createElement('button');b.className='chip';b.type='button';b.textContent='Invite';b.disabled=p.presence.st==='playing';b.onclick=()=>{audio();netInvite(String(p.presence.nm));};

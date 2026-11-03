@@ -29,7 +29,8 @@ Esc opens the menu, M toggles sound.
 
 ## Notes
 
-- Saves (accounts, coins, balls) are stored in your browser. Online play and cloud saves only work in the claude.ai version of the game.
+- Saves (accounts, coins, balls) are stored in your browser. Cloud saves only work in the claude.ai version.
+- Online play works everywhere: on GitHub Pages it connects players directly to each other (invite by username or share a 6-letter join code).
 - Everything is in a single HTML file with no build step.
 
 Made with Claude.
